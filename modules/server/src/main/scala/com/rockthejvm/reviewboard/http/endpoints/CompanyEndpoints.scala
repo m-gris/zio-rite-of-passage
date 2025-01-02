@@ -25,7 +25,7 @@ trait CompanyEndpoints {
     .in(jsonBody[requests.CreateCompany])
     .out(jsonBody[Company])
 
-  val getAllEndpoints =
+  val getAllEndpoint =
     endpoint
       .tag("companies")
       .name("getAll")
@@ -34,7 +34,7 @@ trait CompanyEndpoints {
       .get
       .out(jsonBody[List[Company]])
 
-  val getByIdEndpoints =
+  val getByIdEndpoint =
     endpoint
       .tag("companies")
       .name("getById")
