@@ -17,7 +17,7 @@ final case class CreateCompany(
   country: Option[String] = None,
   industry: Option[String] = None,
   image: Option[String] = None, // BASE 64 -- easy to render on the frontend
-  tags: List[String] = List()
+  tags: Option[List[String]] = None
 
 ) {
   def toCompany(id: Long): Company =
@@ -30,7 +30,7 @@ final case class CreateCompany(
       country=country,
       industry=industry,
       image=image,
-      tags=tags
+      tags=tags.getOrElse(List())
     )
 }
 
