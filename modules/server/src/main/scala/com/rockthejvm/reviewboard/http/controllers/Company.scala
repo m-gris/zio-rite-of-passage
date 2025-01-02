@@ -6,14 +6,16 @@ import zio.*
 
 import com.rockthejvm.reviewboard.domain.data.Company
 import com.rockthejvm.reviewboard.http.endpoints.CompanyEndpoints
+import com.rockthejvm.reviewboard.http.controllers.BaseController
+import sttp.tapir.server.ServerEndpoint
 
-private class CompanyController extends /*i.e IMPLEMENTS */CompanyEndpoints {
+private class CompanyController extends /*i.e IMPLEMENTS */ BaseController with CompanyEndpoints {
 
   // in-memory DB for now
   val db: mutable.Map[Long, Company] = mutable.Map()
 
 
-  val create = createEndpoint.serverLogicSuccess { request => // i.e the PAYLOAD of the POST
+  val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogicSuccess { request => // i.e the PAYLOAD of the POST
     ZIO.succeed {
     val newId = db.keys.max + 1
     val newCompany = request.toCompany(newId)
@@ -22,15 +24,16 @@ private class CompanyController extends /*i.e IMPLEMENTS */CompanyEndpoints {
     }
   }
 
-  val getAll = getAllEndpoint.serverLogicSuccess( _ => ZIO.succeed(db.values.toList) )
+  val getAll: ServerEndpoint[Any, Task] = getAllEndpoint.serverLogicSuccess( _ => ZIO.succeed(db.values.toList) )
 
 
-  val getById = getByIdEndpoint.serverLogicSuccess{ id =>  // nota: NOT A PAYLOAD, but a PATH PARAMETER
+  val getById: ServerEndpoint[Any, Task] = getByIdEndpoint.serverLogicSuccess{ id =>  // nota: NOT A PAYLOAD, but a PATH PARAMETER
       ZIO
         .attempt(id.toLong)
         .map(db.get)
       }
 
+  override val routes = List(create, getAll, getById)
 }
 
 
