@@ -30,5 +30,12 @@ object Company {
   // this given instance will be passed automatically whenever we need to
   //  - return a Company as an HTTP Payload
   //  - or take a Company as input (as an HTTP Payload)
+
+  def makeSlug(name: String): String =
+    name
+      .replaceAll(" +", " ") // i.e NORMALIZE TO SINGLE WHITESPACE
+      .split(" ")
+      .map(_.toLowerCase)
+      .mkString(sep="-")
 }
 
