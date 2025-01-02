@@ -16,7 +16,7 @@ import com.rockthejvm.reviewboard.http.requests
 
 trait CompanyEndpoints {
 
-  val create = endpoint
+  val createEndpoint = endpoint
     .tag("companies")
     .name("create")
     .description("Create a listing for a company")
@@ -25,7 +25,7 @@ trait CompanyEndpoints {
     .in(jsonBody[requests.CreateCompany])
     .out(jsonBody[Company])
 
-  val getAll =
+  val getAllEndpoints =
     endpoint
       .tag("companies")
       .name("getAll")
@@ -34,7 +34,7 @@ trait CompanyEndpoints {
       .get
       .out(jsonBody[List[Company]])
 
-  val getById =
+  val getByIdEndpoints =
     endpoint
       .tag("companies")
       .name("getById")
