@@ -3,6 +3,7 @@ package com.rockthejvm
 import zio.*
 
 import scala.io.StdIn
+import javax.sql.ConnectionPoolDataSource
 
 object ZIORecap extends ZIOAppDefault {
 
