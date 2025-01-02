@@ -11,6 +11,7 @@ import sttp.tapir.server.ziohttp.ZioHttpInterpreter
 import sttp.tapir.server.ziohttp.ZioHttpServerOptions
 import zio.json.JsonCodec
 import zio.json.DeriveJsonCodec
+import sttp.tapir.json.zio.jsonBody
 import org.checkerframework.checker.units.qual.g
 import cats.instances.byte
 import scala.annotation.meta.getter
@@ -137,24 +138,3 @@ object TapirRecap extends  ZIOAppDefault {
 
 }
 
-
-case class Job(
-  id: Long,
-  title: String,
-  url: String,
-  company: String
-  )
-
-object Job:
-  given codec: JsonCodec[Job] = DeriveJsonCodec.gen[Job] // macro-based JSON codec
-
-
-case class CreateJobRequest(
-  title: String,
-  url: String,
-  company: String,
-  )
-
-
-object CreateJobRequest:
-  given codec: JsonCodec[CreateJobRequest] = DeriveJsonCodec.gen[CreateJobRequest] // macro-based JSON codec
