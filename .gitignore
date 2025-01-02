@@ -53,3 +53,4 @@ build/
 ### Scala ###
 .bsp/
 project/project/
+modules/server/src/main/scala/com/rockthejvm/reviewboard/http/endpoints/target/.history3
