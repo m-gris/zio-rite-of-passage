@@ -118,6 +118,34 @@ object CompanyControllerSpec extends ZIOSpecDefault {
           }
           )
       },
+
+      test("get by ID") {
+
+        val program = for {
+
+              controller <- CompanyController.makeZIO
+              backendStub <- ZIO.succeed(
+                TapirStubInterpreter(SttpBackendStub(MonadError[Task]))
+                  .whenServerEndpointRunLogic(controller.getById)
+                  .backend())
+              response <- basicRequest
+                          .get(uri"/companies/1")
+                          .send(backendStub)
+
+            } yield response.body
+
+        assertZIO(program)(
+          Assertion.assertion("returns no company yet...") { respBody =>
+            respBody // Either[String, String]
+              .toOption
+              .flatMap(_.fromJson[Company].toOption) // Option[Company]
+              .isEmpty
+
+          }
+          )
+      },
+
+
   )
 }
 
