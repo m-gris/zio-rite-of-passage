@@ -24,8 +24,7 @@ final case class Company(
 
 
 object Company {
-  /* Exposing the COMPANY as an HTTP PAYLOAD
-   * i.e make the Company instance to be JSON serializable */
+  /* Exposing the COMPANY as an HTTP PAYLOAD - ie. JSON serializable */
   given codec: JsonCodec[Company] = DeriveJsonCodec.gen[Company] // to serialize BACK & FORTH, TO & FROM JSON
   // this given instance will be passed automatically whenever we need to
   //  - return a Company as an HTTP Payload

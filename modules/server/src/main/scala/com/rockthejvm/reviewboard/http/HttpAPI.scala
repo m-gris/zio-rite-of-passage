@@ -9,10 +9,10 @@ object HttpAPI {
   // by COMBINING all the endpoints into a SINGLE COMPREHENSIVE LIST
 
   def gatherRoutes(controllers: List[BaseController]) =
-    controllers.flatMap(_.routes)
+    controllers.flatMap(_.routes) // routes being lists, we must flatten those into a single list...
 
   def makeControllers = for {
-    health <- HealthController.makeZIO
+    health    <- HealthController.makeZIO
     companies <- CompanyController.makeZIO
     // TO DO - add more controllers
     } yield  List(health, companies)

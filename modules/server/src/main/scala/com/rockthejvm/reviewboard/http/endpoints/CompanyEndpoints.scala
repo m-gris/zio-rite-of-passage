@@ -12,7 +12,7 @@ import com.rockthejvm.reviewboard.http.requests
 
 // NOTA BENE
 // Here we are merely DESCRIBING the endpoints
-// those will be implemented in / as so-called CONTROLLERS
+// those will be implemented as SERVICES in so-called CONTROLLERS
 
 trait CompanyEndpoints {
 
