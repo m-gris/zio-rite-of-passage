@@ -91,9 +91,33 @@ object CompanyControllerSpec extends ZIOSpecDefault {
             }
             )
 
-      }
+      },
 
+      test("get all") {
 
+        val program = for {
+
+              controller <- CompanyController.makeZIO
+              backendStub <- ZIO.succeed(
+                TapirStubInterpreter(SttpBackendStub(MonadError[Task]))
+                  .whenServerEndpointRunLogic(controller.getAll)
+                  .backend())
+              response <- basicRequest
+                          .get(uri"/companies")
+                          .send(backendStub)
+
+            } yield response.body
+
+        assertZIO(program)(
+          Assertion.assertion("returns an empty list, i.e no companies at start") { respBody =>
+            respBody // Either[String, String]
+              .toOption
+              .flatMap(_.fromJson[List[Company]].toOption) // Option[List[Company]]
+              .contains(List())
+
+          }
+          )
+      },
   )
 }
 
