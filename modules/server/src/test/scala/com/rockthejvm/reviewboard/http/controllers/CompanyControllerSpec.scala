@@ -12,6 +12,7 @@ import sttp.tapir.ztapir.RIOMonadError
 import sttp.client3.testing.SttpBackendStub
 import com.rockthejvm.reviewboard.http.requests
 import com.rockthejvm.reviewboard.domain.data.Company
+import sttp.tapir.server.ServerEndpoint
 
 
 object CompanyControllerSpec extends ZIOSpecDefault {
@@ -21,6 +22,19 @@ object CompanyControllerSpec extends ZIOSpecDefault {
   private given zioMonadError: MonadError[Task] =
     // a monad error with a REQUIREMENT, which happens to be Any in that case
     new RIOMonadError[Any]
+
+  private def backendStubZIO(getEndpoint: CompanyController => ServerEndpoint[Any, Task]) = for {
+      // 1. CREATE THE CONTROLLER
+      controller <- CompanyController.makeZIO
+      // 2. Build TAPIR BACKEND (wrapped in a ZIO Effect)
+      backendStub <- ZIO.succeed(
+            TapirStubInterpreter(SttpBackendStub(MonadError[Task]))
+              // Customize Behaviors
+              .whenServerEndpointRunLogic(getEndpoint(controller))
+              .backend()
+          )
+    } yield backendStub
+
 
   def spec: Spec[
               TestEnvironment & Scope,
@@ -49,19 +63,10 @@ object CompanyControllerSpec extends ZIOSpecDefault {
 
         val program = for {
 
-          // NB: for-comp because makeZIO
-          // is the only public method to create a controller instance
-
-          // 1. CREATE THE CONTROLLER
-          controller <- CompanyController.makeZIO
-
-          // 2. Build TAPIR BACKEND (wrapped in a ZIO Effect)
-          backendStub <- ZIO.succeed(
-            TapirStubInterpreter(SttpBackendStub(MonadError[Task]))
-              // Customize Behaviors
-              .whenServerEndpointRunLogic(controller.create)
-              .backend()
-          )
+          backendStub <- backendStubZIO(
+                            // lambda to extract the endpoint under test
+                            controller => controller.create
+                          )
 
           // 3. Run HTTP Request
           response <- basicRequest
@@ -96,12 +101,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
       test("get all") {
 
         val program = for {
-
-              controller <- CompanyController.makeZIO
-              backendStub <- ZIO.succeed(
-                TapirStubInterpreter(SttpBackendStub(MonadError[Task]))
-                  .whenServerEndpointRunLogic(controller.getAll)
-                  .backend())
+              backendStub <- backendStubZIO(_.getAll)
               response <- basicRequest
                           .get(uri"/companies")
                           .send(backendStub)
@@ -122,16 +122,10 @@ object CompanyControllerSpec extends ZIOSpecDefault {
       test("get by ID") {
 
         val program = for {
-
-              controller <- CompanyController.makeZIO
-              backendStub <- ZIO.succeed(
-                TapirStubInterpreter(SttpBackendStub(MonadError[Task]))
-                  .whenServerEndpointRunLogic(controller.getById)
-                  .backend())
+              backendStub <- backendStubZIO(_.getById)
               response <- basicRequest
                           .get(uri"/companies/1")
                           .send(backendStub)
-
             } yield response.body
 
         assertZIO(program)(
