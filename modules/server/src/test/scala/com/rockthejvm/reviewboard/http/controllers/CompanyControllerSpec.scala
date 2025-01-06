@@ -10,10 +10,11 @@ import sttp.monad.MonadError
 import sttp.tapir.generic.auto.*
 import sttp.tapir.ztapir.RIOMonadError
 import sttp.client3.testing.SttpBackendStub
-import com.rockthejvm.reviewboard.http.requests
-import com.rockthejvm.reviewboard.domain.data.Company
 import sttp.tapir.server.ServerEndpoint
 
+import com.rockthejvm.reviewboard.syntax.*
+import com.rockthejvm.reviewboard.http.requests
+import com.rockthejvm.reviewboard.domain.data.Company
 
 object CompanyControllerSpec extends ZIOSpecDefault {
 
@@ -81,9 +82,8 @@ object CompanyControllerSpec extends ZIOSpecDefault {
 
 
           // 4. Inspect HTTP Responses
-          assertZIO(program)(
-            Assertion.assertion("inspect http response from the create endpoint") { respBody =>
-
+          // NB: .assert is a custom extension method we created to reduce boilerplate
+          program.assert { respBody =>
               respBody
                 .toOption // we do not care about the left hand side
                 .flatMap(
@@ -94,7 +94,6 @@ object CompanyControllerSpec extends ZIOSpecDefault {
                 .contains(Company(id=1, name="Rock the JVM", slug="rock-the-jvm", url="rockthejvm.com"))
 
             }
-            )
 
       },
 
@@ -108,15 +107,13 @@ object CompanyControllerSpec extends ZIOSpecDefault {
 
             } yield response.body
 
-        assertZIO(program)(
-          Assertion.assertion("returns an empty list, i.e no companies at start") { respBody =>
+        program.assert { respBody =>
             respBody // Either[String, String]
               .toOption
               .flatMap(_.fromJson[List[Company]].toOption) // Option[List[Company]]
               .contains(List())
-
           }
-          )
+
       },
 
       test("get by ID") {
@@ -128,15 +125,13 @@ object CompanyControllerSpec extends ZIOSpecDefault {
                           .send(backendStub)
             } yield response.body
 
-        assertZIO(program)(
-          Assertion.assertion("returns no company yet...") { respBody =>
+        program.assert { respBody =>
             respBody // Either[String, String]
               .toOption
               .flatMap(_.fromJson[Company].toOption) // Option[Company]
               .isEmpty
-
           }
-          )
+
       },
 
 
