@@ -12,17 +12,35 @@ import sttp.tapir.ztapir.RIOMonadError
 import sttp.client3.testing.SttpBackendStub
 import sttp.tapir.server.ServerEndpoint
 
-import com.rockthejvm.reviewboard.syntax.*
+import com.rockthejvm.reviewboard.services.*
 import com.rockthejvm.reviewboard.http.requests
 import com.rockthejvm.reviewboard.domain.data.Company
+import com.rockthejvm.reviewboard.syntax.*
 
 object CompanyControllerSpec extends ZIOSpecDefault {
 
   // 'monad error' => a capability to map, flatMap & throw errors
   // needed to create the backendStub used in the test...
-  private given zioMonadError: MonadError[Task] =
-    // a monad error with a REQUIREMENT, which happens to be Any in that case
-    new RIOMonadError[Any]
+  private given zioMonadError: MonadError[Task] = new RIOMonadError[Any]
+                                                  // a monad error with a REQUIREMENT,
+                                                  // which happens to be Any in that case
+
+  private val rtjvm = Company(id=1, name="Rock the JVM", slug="rock-the-jvm", url="rockthejvm.com")
+
+  private val serviceStub = new CompanyService {
+
+    override def create(req: requests.CreateCompany): Task[Company] = ZIO.succeed(rtjvm)
+
+    override def getAll: Task[List[Company]] = ZIO.succeed(List(rtjvm))
+
+    override def getById(id: Long): Task[Option[Company]] = ZIO.succeed {
+      if id == 1 then Some(rtjvm) else None
+    }
+    override def getBySlug(slug: String): Task[Option[Company]] = ZIO.succeed {
+      if slug == rtjvm.slug then Some(rtjvm) else None
+    }
+
+  }
 
   private def backendStubZIO(getEndpoint: CompanyController => ServerEndpoint[Any, Task]) = for {
       // 1. CREATE THE CONTROLLER
@@ -111,7 +129,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
             respBody // Either[String, String]
               .toOption
               .flatMap(_.fromJson[List[Company]].toOption) // Option[List[Company]]
-              .contains(List())
+              .contains(List(rtjvm))
           }
 
       },
@@ -129,13 +147,12 @@ object CompanyControllerSpec extends ZIOSpecDefault {
             respBody // Either[String, String]
               .toOption
               .flatMap(_.fromJson[Company].toOption) // Option[Company]
-              .isEmpty
+              .contains(rtjvm)
           }
 
       },
 
-
-  )
+  ).provide(ZLayer.succeed(serviceStub))
 }
 
 
