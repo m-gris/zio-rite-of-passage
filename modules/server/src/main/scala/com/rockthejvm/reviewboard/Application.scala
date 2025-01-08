@@ -13,6 +13,7 @@ import com.rockthejvm.reviewboard.repositories.*
 import com.rockthejvm.reviewboard.http.controllers.*
 
 
+
 object Application extends ZIOAppDefault {
 
   // val serverProgram: ZIO[Server, IOException, Unit] = for {
@@ -27,6 +28,7 @@ object Application extends ZIOAppDefault {
     Server.default,
     CompanyServiceLive.layer,
     CompanyRepositoryLive.layer,
+    Repository.dataLayer,
   )
 
 }
