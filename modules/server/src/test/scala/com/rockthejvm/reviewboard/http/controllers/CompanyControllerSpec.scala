@@ -12,10 +12,10 @@ import sttp.tapir.ztapir.RIOMonadError
 import sttp.client3.testing.SttpBackendStub
 import sttp.tapir.server.ServerEndpoint
 
-import com.rockthejvm.reviewboard.services.*
-import com.rockthejvm.reviewboard.http.requests
-import com.rockthejvm.reviewboard.domain.data.Company
 import com.rockthejvm.reviewboard.syntax.*
+import com.rockthejvm.reviewboard.services.*
+import com.rockthejvm.reviewboard.http.requests.*
+import com.rockthejvm.reviewboard.domain.data.Company
 
 object CompanyControllerSpec extends ZIOSpecDefault {
 
@@ -29,7 +29,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
 
   private val serviceStub = new CompanyService {
 
-    override def create(req: requests.CreateCompany): Task[Company] = ZIO.succeed(rtjvm)
+    override def create(req: CompanyCreationRequest): Task[Company] = ZIO.succeed(rtjvm)
 
     override def getAll: Task[List[Company]] = ZIO.succeed(List(rtjvm))
 
@@ -92,7 +92,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
                       .post(uri"/companies") // uri"" custom string interpolator from sttp.client3
                       .body( // requires a string as input
                         // we must therefore SERIALIZE TO JSON using zio.json's extension methods
-                        requests.CreateCompany("Rock the JVM", "rockthejvm.com").toJson)
+                        CompanyCreationRequest("Rock the JVM", "rockthejvm.com").toJson)
                         // toJson requires an implicit encoder, found in generator in sttp.tapir.generic.auto.*
                       .send(backendStub) // synchronously send this request to the backendstub
 

@@ -5,7 +5,7 @@ import zio.json.DeriveJsonCodec
 import sttp.tapir.generic.auto._
 import com.rockthejvm.reviewboard.domain.data.Company
 
-final case class CreateCompany(
+final case class CompanyCreationRequest(
 
   // NON-NULLABLE FIELDS --- start
   name: String,
@@ -34,6 +34,6 @@ final case class CreateCompany(
     )
 }
 
-object CreateCompany {
-  given codec: JsonCodec[CreateCompany] = DeriveJsonCodec.gen[CreateCompany]
+object CompanyCreationRequest {
+  given codec: JsonCodec[CompanyCreationRequest] = DeriveJsonCodec.gen[CompanyCreationRequest]
 }

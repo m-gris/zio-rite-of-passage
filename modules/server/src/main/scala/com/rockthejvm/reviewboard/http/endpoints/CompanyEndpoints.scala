@@ -7,7 +7,7 @@ import sttp.tapir.generic.auto.* // imports the type class derivation functional
 
 // IMPORTS - Local
 import com.rockthejvm.reviewboard.domain.data.*
-import com.rockthejvm.reviewboard.http.requests
+import com.rockthejvm.reviewboard.http.requests.*
 
 
 // NOTA BENE
@@ -22,7 +22,7 @@ trait CompanyEndpoints {
     .description("Create a listing for a company")
     .in("companies")
     .post
-    .in(jsonBody[requests.CreateCompany])
+    .in(jsonBody[CompanyCreationRequest])
     .out(jsonBody[Company])
 
   val getAllEndpoint =
