@@ -5,10 +5,10 @@ import scala.collection.mutable
 import zio.*
 import sttp.tapir.server.ServerEndpoint
 
+import com.rockthejvm.reviewboard.services.*
 import com.rockthejvm.reviewboard.domain.data.Company
 import com.rockthejvm.reviewboard.http.endpoints.CompanyEndpoints
 import com.rockthejvm.reviewboard.http.controllers.BaseController
-import com.rockthejvm.reviewboard.services.*
 
 
 
@@ -33,6 +33,7 @@ class CompanyController private (service: CompanyService) extends /*i.e IMPLEMEN
       }
 
   override val routes = List(create, getAll, getById)
+
 }
 
 
