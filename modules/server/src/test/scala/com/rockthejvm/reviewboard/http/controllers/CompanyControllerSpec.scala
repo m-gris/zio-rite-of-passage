@@ -20,14 +20,19 @@ import com.rockthejvm.reviewboard.domain.data.Company
 object CompanyControllerSpec extends ZIOSpecDefault {
 
   // 'monad error' => a capability to map, flatMap & throw errors
-  // needed to create the backendStub used in the test...
+  // REQ: needed to create the backendStub used in the test...
   private given zioMonadError: MonadError[Task] = new RIOMonadError[Any]
                                                   // a monad error with a REQUIREMENT,
                                                   // which happens to be Any in that case
 
   private val rtjvm = Company(id=1, name="Rock the JVM", slug="rock-the-jvm", url="rockthejvm.com")
 
+  /*
+   * REQUIREMENT FOR COMPANYCONTROLLER: we need a CompanyService
+   */
   private val serviceStub = new CompanyService {
+
+    // SIMPLY "HARDCODE" ALL THE METHODS...
 
     override def create(req: CompanyCreationRequest): Task[Company] = ZIO.succeed(rtjvm)
 
@@ -42,6 +47,11 @@ object CompanyControllerSpec extends ZIOSpecDefault {
 
   }
 
+  /*
+   * REQ: a SYNCHRONOUS http server
+   * allowing to send http requests as args to funcs
+   * and getting back an http response SYNCRHONOUSLY
+   */
   private def backendStubZIO(getEndpoint: CompanyController => ServerEndpoint[Any, Task]) = for {
       // 1. CREATE THE CONTROLLER
       controller <- CompanyController.makeZIO
@@ -152,7 +162,9 @@ object CompanyControllerSpec extends ZIOSpecDefault {
 
       },
 
-  ).provide(ZLayer.succeed(serviceStub))
+  ).provide(
+    ZLayer.succeed(serviceStub) // needed by controller <- CompanyController.makeZIO
+  )
 }
 
 
