@@ -14,22 +14,22 @@ import com.rockthejvm.reviewboard.http.controllers.BaseController
 
 class CompanyController private (service: CompanyService) extends /*i.e IMPLEMENTS */ BaseController with CompanyEndpoints {
 
-  val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogicSuccess { request => // i.e the PAYLOAD of the POST
-    service.create(request)
+  val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogic { request => // i.e the PAYLOAD of the POST
+    service.create(request).either
   }
 
-  val getAll: ServerEndpoint[Any, Task] = getAllEndpoint.serverLogicSuccess{ _ =>
-    service.getAll
+  val getAll: ServerEndpoint[Any, Task] = getAllEndpoint.serverLogic{ _ =>
+    service.getAll.either
   }
 
 
-  val getById: ServerEndpoint[Any, Task] = getByIdEndpoint.serverLogicSuccess{ id =>  // nota: NOT A PAYLOAD, but a PATH PARAMETER
+  val getById: ServerEndpoint[Any, Task] = getByIdEndpoint.serverLogic{ id =>  // nota: NOT A PAYLOAD, but a PATH PARAMETER
       ZIO
         .attempt(id.toLong)
         .flatMap(service.getById(_))
         .catchSome {
           case _: java.lang.NumberFormatException => service.getBySlug(id)
-        }
+        }.either
       }
 
   override val routes = List(create, getAll, getById)
