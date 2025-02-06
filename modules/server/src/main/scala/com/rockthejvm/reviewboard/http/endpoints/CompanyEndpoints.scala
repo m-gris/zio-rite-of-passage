@@ -14,19 +14,19 @@ import com.rockthejvm.reviewboard.http.requests.*
 // Here we are merely DESCRIBING the endpoints
 // those will be implemented as SERVICES in so-called CONTROLLERS
 
-trait CompanyEndpoints {
+trait CompanyEndpoints extends BaseEndpoint {
 
-  val createEndpoint = endpoint
+  val createEndpoint = baseEndpoint
     .tag("companies")
     .name("create")
     .description("Create a listing for a company")
     .in("companies")
     .post
-    .in(jsonBody[CompanyCreationRequest])
+    .in(jsonBody[CompanyCreationRequest]) // TODO: search if Metals or another plugin can inlay Implicit params & implicit conversions
     .out(jsonBody[Company])
 
   val getAllEndpoint =
-    endpoint
+    baseEndpoint
       .tag("companies")
       .name("getAll")
       .description("Get all company listings")
@@ -35,7 +35,7 @@ trait CompanyEndpoints {
       .out(jsonBody[List[Company]])
 
   val getByIdEndpoint =
-    endpoint
+    baseEndpoint
       .tag("companies")
       .name("getById")
       .description("Get a company listing by its ID")

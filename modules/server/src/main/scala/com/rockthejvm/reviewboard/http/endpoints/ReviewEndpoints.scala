@@ -9,9 +9,9 @@ import sttp.tapir.generic.auto.* // imports the type class derivation functional
 import com.rockthejvm.reviewboard.domain.data.*
 import com.rockthejvm.reviewboard.http.requests.*
 
-trait ReviewEndpoints {
+trait ReviewEndpoints extends BaseEndpoint {
 
-  val createEndpoint = endpoint
+  val createEndpoint = baseEndpoint
     .tag("reviews")
     .name("create")
     .description("Adds a review for a given company")
@@ -21,7 +21,7 @@ trait ReviewEndpoints {
     .out(jsonBody[Review])
 
   val getByIdEndpoint =
-    endpoint
+    baseEndpoint
       .tag("reviews")
       .name("getById")
       .description("Get a review by its ID")
@@ -30,7 +30,7 @@ trait ReviewEndpoints {
       .out(jsonBody[Option[Review]])
 
   val getByCompanyIdEndpoint =
-    endpoint
+    baseEndpoint
       .tag("reviews")
       .name("getAll")
       .description("Get all reviews for a given company")
