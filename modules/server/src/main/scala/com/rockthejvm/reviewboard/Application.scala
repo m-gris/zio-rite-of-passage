@@ -28,6 +28,8 @@ object Application extends ZIOAppDefault {
     Server.default,
     CompanyServiceLive.layer,
     CompanyRepositoryLive.layer,
+    ReviewServiceLive.layer,
+    ReviewRepositoryLive.layer,
     Repository.dataLayer,
   )
 
