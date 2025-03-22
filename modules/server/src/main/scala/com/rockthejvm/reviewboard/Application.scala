@@ -31,6 +31,9 @@ object Application extends ZIOAppDefault {
     ReviewServiceLive.layer,
     ReviewRepositoryLive.layer,
     Repository.dataLayer,
+    UserServiceLive.layer,
+    UserRepositoryLive.layer,
+    JWTServiceLive.configuredLayer
   )
 
 }

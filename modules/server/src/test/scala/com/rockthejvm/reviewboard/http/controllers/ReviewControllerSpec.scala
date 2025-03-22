@@ -53,7 +53,7 @@ object ReviewControllerSpec extends ZIOSpecDefault {
   /*
    * REQ: a SYNCHRONOUS http server
    * allowing to send http requests as args to funcs
-   * and getting back an http response SYNCRHONOUSLY
+   * and getting back an http response SYNCHRONOUSLY
    */
   private def backendStubZIO(getEndpoint: ReviewController => ServerEndpoint[Any, Task]) = for {
       // 1. CREATE THE CONTROLLER

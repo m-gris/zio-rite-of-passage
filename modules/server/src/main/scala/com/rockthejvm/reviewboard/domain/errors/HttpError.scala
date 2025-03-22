@@ -1,6 +1,7 @@
 package com.rockthejvm.reviewboard.domain.errors
 
 import sttp.model.StatusCode
+import com.rockthejvm.reviewboard.domain.errors.UnauthorizedException
 
 final case class HttpError (
   statusCode: StatusCode,
@@ -13,8 +14,12 @@ object HttpError {
   def encode(tuple: (StatusCode, String)) =
     HttpError(tuple._1, tuple._2, new RuntimeException(tuple._2))
 
-  def decode(error: Throwable) = (
-    StatusCode.InternalServerError,
-    error.getMessage) // standard JAVA API
+  def decode(error: Throwable) = error match {
+    case UnauthorizedException => (StatusCode.Unauthorized, error.getMessage)
+    // TODO ... more granular error handling
+    // surface out different statuses depending on the exception thrown
+    case _ => ( StatusCode.InternalServerError, error.getMessage)
+  }
+
 
 }

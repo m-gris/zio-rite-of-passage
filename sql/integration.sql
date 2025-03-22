@@ -1,7 +1,3 @@
-CREATE DATABASE reviewboard;
-\c reviewboard;
-
-
 CREATE TABLE IF NOT EXISTS companies (
     id BIGSERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
