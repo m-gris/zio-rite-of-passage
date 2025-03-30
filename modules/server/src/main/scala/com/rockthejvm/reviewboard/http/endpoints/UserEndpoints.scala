@@ -3,6 +3,7 @@ package com.rockthejvm.reviewboard.http.endpoints
 // IMPORTS - 3rd parties
 import sttp.tapir.*
 import sttp.tapir.json.zio.*
+import sttp.model.StatusCode
 import sttp.tapir.generic.auto.* // imports the type class derivation functionallity (to create the JsonCodecs)
 
 // IMPORTS - Local
@@ -58,4 +59,25 @@ trait UserEndpoints extends BaseEndpoint {
       .post
       .in(jsonBody[UserLoginRequest])
       .out(jsonBody[UserSession])
+
+  // forgot password flow
+  // POST /users/reset { email } - 200 ok
+  val forgotPasswordEndpoint =
+    baseEndpoint
+      .tag("users")
+      .name("forgot password")
+      .description("Triggers email for password recovery")
+      .in("users" / "forgot")
+      .post
+      .in(jsonBody[ForgotPasswordRequest])
+
+  val resetPasswordEndpoint =
+    baseEndpoint
+      .tag("users")
+      .name("reset password")
+      .description("Sets new password based on OTP")
+      .in("users" / "reset")
+      .post
+      .in(jsonBody[ResetPasswordRequest])
+
 }

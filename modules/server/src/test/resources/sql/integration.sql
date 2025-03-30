@@ -33,3 +33,10 @@ CREATE TABLE IF NOT EXISTS users (
     created TIMESTAMP NOT NULL DEFAULT now(),
     updated TIMESTAMP NOT NULL DEFAULT now()
 );
+
+
+CREATE TABLE IF NOT EXISTS otps (
+    email TEXT PRIMARY KEY,
+    token TEXT NOT NULL,
+    expires BIGINT NOT NULL
+);

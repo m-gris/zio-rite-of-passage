@@ -14,6 +14,7 @@ import sttp.tapir.server.ServerEndpoint
 
 import com.rockthejvm.reviewboard.syntax.*
 import com.rockthejvm.reviewboard.services.*
+import com.rockthejvm.reviewboard.domain.data.*
 import com.rockthejvm.reviewboard.http.requests.*
 import com.rockthejvm.reviewboard.domain.data.Company
 
@@ -30,7 +31,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
   /*
    * REQUIREMENT FOR COMPANYCONTROLLER: we need a CompanyService
    */
-  private val serviceStub = new CompanyService {
+  private val companyServiceStub = new CompanyService {
 
     // SIMPLY "HARDCODE" ALL THE METHODS...
 
@@ -45,6 +46,16 @@ object CompanyControllerSpec extends ZIOSpecDefault {
       if slug == rtjvm.slug then Some(rtjvm) else None
     }
 
+  }
+
+
+  // NOTE: we don't care about the implementation
+  // We just NEED the dependency
+  private val jwtServiceStub = new JWTService {
+  override def startSession(user: User): Task[UserSession]  =
+    ZIO.succeed(UserSession(user.email, "SOME_TOKEN", 99999999L))
+  override def verifyToken(token: String): Task[Identifiers] =
+    ZIO.succeed(Identifiers(123L, "joe@x.com"))
   }
 
   /*
@@ -104,6 +115,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
                         // we must therefore SERIALIZE TO JSON using zio.json's extension methods
                         CompanyCreationRequest("Rock the JVM", "rockthejvm.com").toJson)
                         // toJson requires an implicit encoder, found in generator in sttp.tapir.generic.auto.*
+                      .header("Authorization", "Bearer ANYTHING_SINCE_MOCKED")
                       .send(backendStub) // synchronously send this request to the backendstub
 
         } yield response.body // a string
@@ -163,7 +175,8 @@ object CompanyControllerSpec extends ZIOSpecDefault {
       },
 
   ).provide(
-    ZLayer.succeed(serviceStub) // needed by controller <- CompanyController.makeZIO
+    ZLayer.succeed(companyServiceStub), // needed by controller <- CompanyController.makeZIO
+    ZLayer.succeed(jwtServiceStub)
   )
 }
 

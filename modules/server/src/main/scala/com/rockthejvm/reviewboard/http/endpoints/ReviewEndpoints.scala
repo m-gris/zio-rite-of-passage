@@ -11,7 +11,7 @@ import com.rockthejvm.reviewboard.http.requests.*
 
 trait ReviewEndpoints extends BaseEndpoint {
 
-  val createEndpoint = baseEndpoint
+  val createEndpoint = securedBaseEndpoint
     .tag("reviews")
     .name("create")
     .description("Adds a review for a given company")

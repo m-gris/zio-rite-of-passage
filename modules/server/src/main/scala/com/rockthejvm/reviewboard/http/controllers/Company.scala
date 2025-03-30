@@ -7,28 +7,39 @@ import sttp.tapir.server.ServerEndpoint
 
 import com.rockthejvm.reviewboard.services.*
 import com.rockthejvm.reviewboard.domain.data.Company
+import com.rockthejvm.reviewboard.domain.data.Identifiers
 import com.rockthejvm.reviewboard.http.endpoints.CompanyEndpoints
 import com.rockthejvm.reviewboard.http.controllers.BaseController
 
 
 
-class CompanyController private (service: CompanyService) extends /*i.e IMPLEMENTS */ BaseController with CompanyEndpoints {
+class CompanyController private (
+  companyService: CompanyService,
+  jwtService: JWTService
+) extends /*i.e IMPLEMENTS */ BaseController with CompanyEndpoints {
 
-  val create: ServerEndpoint[Any, Task] = createEndpoint.serverLogic { request => // i.e the PAYLOAD of the POST
-    service.create(request).either
-  }
+
+  val create: ServerEndpoint[Any, Task] =
+    createEndpoint
+      .serverSecurityLogic[Identifiers, Task]{
+          token => jwtService.verifyToken(token).either }
+      .serverLogic {
+        user /* serverSecurityLogic output */
+          => request /* post's payload */
+          => companyService.create(request).either
+      }
 
   val getAll: ServerEndpoint[Any, Task] = getAllEndpoint.serverLogic{ _ =>
-    service.getAll.either
+    companyService.getAll.either
   }
 
 
   val getById: ServerEndpoint[Any, Task] = getByIdEndpoint.serverLogic{ id =>  // nota: NOT A PAYLOAD, but a PATH PARAMETER
       ZIO
         .attempt(id.toLong)
-        .flatMap(service.getById(_))
+        .flatMap(companyService.getById(_))
         .catchSome {
-          case _: java.lang.NumberFormatException => service.getBySlug(id)
+          case _: java.lang.NumberFormatException => companyService.getBySlug(id)
         }.either
       }
 
@@ -40,7 +51,8 @@ class CompanyController private (service: CompanyService) extends /*i.e IMPLEMEN
 object CompanyController {
   // make effectfullness EXPLICIT
   val makeZIO = for {
-    service <- ZIO.service[CompanyService]
-  } yield CompanyController(service)
+    companyService <- ZIO.service[CompanyService]
+    jwtService <- ZIO.service[JWTService]
+  } yield CompanyController(companyService, jwtService)
 }
 

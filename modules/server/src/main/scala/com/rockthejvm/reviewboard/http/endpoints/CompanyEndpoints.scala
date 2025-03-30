@@ -16,7 +16,7 @@ import com.rockthejvm.reviewboard.http.requests.*
 
 trait CompanyEndpoints extends BaseEndpoint {
 
-  val createEndpoint = baseEndpoint
+  val createEndpoint = securedBaseEndpoint
     .tag("companies")
     .name("create")
     .description("Create a listing for a company")

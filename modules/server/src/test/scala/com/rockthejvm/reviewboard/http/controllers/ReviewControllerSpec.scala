@@ -14,10 +14,11 @@ import sttp.tapir.server.ServerEndpoint
 
 import com.rockthejvm.reviewboard.syntax.*
 import com.rockthejvm.reviewboard.services.*
+import com.rockthejvm.reviewboard.domain.data.*
 import com.rockthejvm.reviewboard.http.requests.*
-import com.rockthejvm.reviewboard.domain.data.Review
 import com.rockthejvm.reviewboard.repositories.ReviewRepositorySpec.badReview
 import com.rockthejvm.reviewboard.repositories.ReviewRepositorySpec.goodReview
+import com.rockthejvm.reviewboard.domain.data.UserSession
 
 object ReviewControllerSpec extends ZIOSpecDefault {
 
@@ -31,7 +32,7 @@ object ReviewControllerSpec extends ZIOSpecDefault {
   /*
    * REQUIREMENT for the "CONTROLLER UNDER TEST": we need a SERVICE
    */
-  private val serviceStub = new ReviewService {
+  private val reviewServiceStub = new ReviewService {
 
     override def create(request: ReviewCreationRequest, userId: Long): Task[Review] =
       ZIO.succeed(goodReview)
@@ -48,6 +49,16 @@ object ReviewControllerSpec extends ZIOSpecDefault {
       List(goodReview, badReview).filter(_.userId == userId)
     }
 
+  }
+
+
+  // NOTE: we don't care about the implementation
+  // We just NEED the dependency
+  private val jwtServiceStub = new JWTService {
+  override def startSession(user: User): Task[UserSession]  =
+    ZIO.succeed(UserSession(user.email, "SOME_TOKEN", 99999999L))
+  override def verifyToken(token: String): Task[Identifiers] =
+    ZIO.succeed(Identifiers(123L, "joe@x.com"))
   }
 
   /*
@@ -94,6 +105,7 @@ object ReviewControllerSpec extends ZIOSpecDefault {
                                   review = "all good"
                                 )/*serialize*/.toJson // extension method enabled tapir.generic_auto
                                )
+                          .header("Authorization", "Bearer ANYTHING_SINCE_MOCKED")
                           .send(backendStub)
 
         } yield response.body // Either[String, String] that will be "parsed from json" downstream
@@ -150,6 +162,9 @@ object ReviewControllerSpec extends ZIOSpecDefault {
       }
 
 
-      ).provide(ZLayer.succeed(serviceStub))
+      ).provide(
+        ZLayer.succeed(reviewServiceStub),
+        ZLayer.succeed(jwtServiceStub)
+      )
 
 }

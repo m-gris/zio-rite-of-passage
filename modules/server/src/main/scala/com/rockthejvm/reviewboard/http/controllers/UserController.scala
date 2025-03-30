@@ -10,6 +10,7 @@ import com.rockthejvm.reviewboard.services.JWTService
 import com.rockthejvm.reviewboard.services.UserService
 import com.rockthejvm.reviewboard.http.endpoints.UserEndpoints
 import com.rockthejvm.reviewboard.http.responses.UserResponse
+import com.rockthejvm.reviewboard.domain.errors.UnauthorizedException
 
 final case class UserController private (userService: UserService, jwtService: JWTService) extends BaseController with UserEndpoints {
   val register: ServerEndpoint[Any, Task] = userRegistrationEndpoint
@@ -49,7 +50,28 @@ final case class UserController private (userService: UserService, jwtService: J
           .either
       }
 
-  override val routes: List[ServerEndpoint[Any, Task]] = List(register, login, updatePassword, deleteAccount)
+  val forgotPassword: ServerEndpoint[Any, Task] =
+    forgotPasswordEndpoint
+      .serverLogic { req => userService.sendOTP(req.email).either }
+
+  val resetPassword: ServerEndpoint[Any, Task] =
+    resetPasswordEndpoint
+      .serverLogic { req =>
+        userService.resetPassword(req.email, req.OTP, req.newPassword) // Task[Boolean]
+        .filterOrFail(bool => bool) // just return the boolean
+                     (UnauthorizedException) // or fail with 401 if wrong email, wrong OTP...
+                     .unit // we now can discard the boolean if no failure
+                     .either
+      }
+
+  override val routes: List[ServerEndpoint[Any, Task]] = List(
+      register,
+      login,
+      updatePassword,
+      deleteAccount,
+      forgotPassword,
+      resetPassword
+    )
 
 }
 

@@ -66,19 +66,48 @@ object UserFlowSpec extends ZIOSpecDefault with RepositorySpec {
                           Nothing // the CAPABILITY type (websockets, streams...)
                           ]) {
 
+    def send[A: JsonCodec]( // [A: JsonCode] => `Context Bound` A must have a JsonCode typeclass in scope
+      payload: A,
+      method: Method,
+      path: String,
+      maybeToken: Option[String] = None
+      ) = basicRequest
+          .method(method, uri"$path")
+          .body(payload.toJson) //serialization, extension method enabled tapir.generic_auto)
+          .auth.bearer(maybeToken.getOrElse(""))
+          .send(backend)
+
     def sendAndParse[A: JsonCodec, B: JsonCodec]( // [A: JsonCode] => `Context Bound` A must have a JsonCode typeclass in scope
       payload: A,
       method: Method,
       path: String,
       maybeToken: Option[String] = None
-      ): Task[Either[String, B]] = basicRequest
-          .method(method, uri"$path")
-          .body(payload.toJson) //serialization, extension method enabled tapir.generic_auto)
-          .auth.bearer(maybeToken.getOrElse(""))
-          .send(backend)
+      ): Task[Either[String, B]] =
+        send(payload, method, path, maybeToken)
           .map(parse[B])
+
     }
 
+
+  class EmailServiceProbe extends EmailService {
+
+    val db = collection.mutable.Map[String, String]()
+
+    // will not really sent any email
+    override def sendEmail(to: String, subject: String, content: String): Task[Unit] =
+      ZIO.unit
+
+    // instead of sending... just store the otp create    // instead of sending... just store the otp create
+    override def sendRecoveryEmail(to: String, otp: String): Task[Unit] =
+      ZIO.succeed(db += (to -> otp))
+
+    def probe(email: String): Task[Option[String]] = ZIO.succeed(db.get(email))
+
+  }
+
+  // will be used to "probe", i.e check that OTP was indeed sent...
+  val EmailServiceLayer: ZLayer[Any, Nothing, EmailServiceProbe] =
+    ZLayer.succeed(new EmailServiceProbe())
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
 
@@ -94,10 +123,11 @@ object UserFlowSpec extends ZIOSpecDefault with RepositorySpec {
           backend <- backendStubZIO
 
           response <- backend
-                        .sendAndParse[UserRegistration, UserResponse](
+                        .send(
                           UserRegistration(USER_EMAIL, USER_PWD),
                           Method.POST,
                           "/users")
+                        .map(parse[UserResponse])
 
         } yield assertTrue(response.contains(UserResponse(USER_EMAIL)))
       },
@@ -216,8 +246,62 @@ object UserFlowSpec extends ZIOSpecDefault with RepositorySpec {
 
       },
 
+      test("password reset flow") {
+
+        val NEW_PWD = "newpwd123"
+
+        for  {
+
+          backend           <- backendStubZIO
+
+          userRegistration  <- backend.send(
+                                  UserRegistration(USER_EMAIL, USER_PWD),
+                                  Method.POST,
+                                  "/users")
+
+          _                 <- backend.send(
+                                  ForgotPasswordRequest(USER_EMAIL),
+                                  Method.POST,
+                                  "/users/forgot"
+                                )
+
+          emailService <- ZIO.service[EmailServiceProbe]
+
+
+          otp           <- emailService.probe(USER_EMAIL)
+                              .someOrFail(new RuntimeException("OTP was NOT emailed"))
+
+          _                 <- backend.send(
+                                  ResetPasswordRequest(USER_EMAIL, otp, NEW_PWD),
+                                  Method.POST,
+                                  "/users/reset"
+                                )
+
+          failedLogin   <- backend
+                      .sendAndParse[UserLoginRequest, UserSession](
+                        UserLoginRequest(USER_EMAIL, USER_PWD),
+                        Method.POST,
+                        "/users/login")
+
+
+
+          succesfulLogin   <- backend
+                      .sendAndParse[UserLoginRequest, UserSession](
+                        UserLoginRequest(USER_EMAIL, NEW_PWD),
+                        Method.POST,
+                        "/users/login")
+
+
+        } yield assertTrue(
+                  failedLogin.isLeft
+                  && succesfulLogin.isRight)
+
+      },
+
       ).provide(
+        EmailServiceLayer,
         UserServiceLive.layer,
+        OTPRepositoryLive.configuredLayer,
         JWTServiceLive.configuredLayer,
         UserRepositoryLive.layer,
         Quill.Postgres.fromNamingStrategy(SnakeCase),

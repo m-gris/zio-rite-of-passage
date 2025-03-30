@@ -2,9 +2,13 @@ package com.rockthejvm.reviewboard.services
 
 import zio.*
 import zio.test.*
+import io.getquill.*
+import io.getquill.jdbczio.Quill
 
 import com.rockthejvm.reviewboard.domain.data.*
-import com.rockthejvm.reviewboard.repositories.UserRepository
+import com.rockthejvm.reviewboard.repositories.*
+import com.rockthejvm.reviewboard.services.EmailService
+
 
 object UserServiceSpec extends ZIOSpecDefault {
 
@@ -58,6 +62,30 @@ object UserServiceSpec extends ZIOSpecDefault {
       override def verifyToken(token: String): Task[Identifiers] = ZIO.succeed {
         Identifiers(daniel.id, daniel.email)
       }
+    }
+  }
+
+  val stubEmailServiceLayer = ZLayer.succeed {
+    new EmailService {
+      override def sendEmail(
+        to: String,
+        subject: String,
+        content: String
+      ): Task[Unit] = ZIO.unit // we just don't care sending emails here...
+    }
+  }
+
+  val stubOTPRepoLayer = ZLayer.succeed {
+    new OTPRepository {
+      val db = collection.mutable.Map[String, String]()
+      override def checkOTP(email: String, OTP: String): Task[Boolean] =
+        ZIO.succeed(db.get(email).map(_ == OTP).nonEmpty)
+      override def getOTP(email: String): Task[Option[String]] = ZIO.attempt {
+        val otp: String = scala.util.Random.alphanumeric.take(8).mkString.toUpperCase()
+        db += (email -> otp)
+        Some(otp)
+      }
+
     }
   }
 
@@ -135,8 +163,10 @@ object UserServiceSpec extends ZIOSpecDefault {
 
       ).provide(
         stubJWTLayer,
+        stubOTPRepoLayer,
         stubUserRepoLayer,
-        UserServiceLive.layer
+        stubEmailServiceLayer,
+        UserServiceLive.layer,
         )
 
 

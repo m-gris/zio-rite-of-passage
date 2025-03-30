@@ -9,8 +9,10 @@ import zio.*
 
 import com.rockthejvm.reviewboard.domain.data.User
 import com.rockthejvm.reviewboard.services.JWTService
+import com.rockthejvm.reviewboard.services.EmailService
 import com.rockthejvm.reviewboard.domain.data.UserSession
 import com.rockthejvm.reviewboard.repositories.UserRepository
+import com.rockthejvm.reviewboard.repositories.OTPRepository
 
 
 trait UserService {
@@ -28,9 +30,19 @@ trait UserService {
   // acting as the "authentication bearer header" of the HTTP request
   def login(email: String, password: String): Task[Option[UserSession]]
 
+
+  def sendOTP(email: String): Task[Unit]
+
+  def resetPassword(email: String, OTP: String, newPassword: String): Task[Boolean]
+
 }
 
-class UserServiceLive private(jwtService: JWTService, userRepo: UserRepository) extends UserService {
+class UserServiceLive private(
+  jwtService: JWTService,
+  emailService: EmailService,
+  otpRepo: OTPRepository,
+  userRepo: UserRepository,
+) extends UserService {
 
 
 
@@ -89,14 +101,38 @@ class UserServiceLive private(jwtService: JWTService, userRepo: UserRepository) 
       jwtToken    <- jwtService.startSession(user).when(isValidated)
     } yield jwtToken
 
+
+  override def sendOTP(email: String): Task[Unit] =
+    otpRepo.getOTP(email).flatMap {
+      case Some(otp) => emailService.sendRecoveryEmail(email, otp)
+      case None      => ZIO.unit
+    }
+
+  override def resetPassword(email: String, otp: String, newPassword: String): Task[Boolean] =
+    for {
+      existingUser  <- userRepo
+                        .getByEmail(email)
+                        .someOrFail(new RuntimeException("Non-existant user"))
+      isValidOTP    <- otpRepo.checkOTP(email, otp)
+      result        <- userRepo.update(
+                                  existingUser.id,
+                                  user => user.copy(
+                                          hashedPassword=UserServiceLive.Hash.generate(newPassword)))
+                                .when(isValidOTP) // Option
+                                .map(_.nonEmpty) // convert to Boolean
+    } yield result
+
+
 }
 
 object UserServiceLive {
   val layer = ZLayer {
     for {
-    jwtService  <- ZIO.service[JWTService]
-    userRepo    <- ZIO.service[UserRepository]
-    } yield new UserServiceLive(jwtService, userRepo)
+    jwtService    <- ZIO.service[JWTService]
+    emailService  <- ZIO.service[EmailService]
+    otpRepo    <- ZIO.service[OTPRepository]
+    userRepo      <- ZIO.service[UserRepository]
+    } yield new UserServiceLive(jwtService, emailService, otpRepo, userRepo)
   }
 
   object Hash {
