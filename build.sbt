@@ -1,12 +1,23 @@
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 ThisBuild / version      := "0.1.0-SNAPSHOT"
-ThisBuild / scalaVersion := "3.3.0"
+ThisBuild / scalaVersion := "3.3.5"
 ThisBuild / scalacOptions ++= Seq(
   "-unchecked",
   "-deprecation",
   "-feature"
 )
+
+
+// CLAUDE: Make all warnings fatal
+scalacOptions ++= Seq(
+  "-Werror",                // Turns all warnings into errors
+  "-deprecation",           // Emit warning for usage of deprecated APIs
+  "-feature",               // Emit warning for usage of features that should be imported explicitly
+  "-unchecked",             // Enable additional warnings where generated code depends on assumptions
+  "-Wunused:all"            // Warn about all unused elements
+)
+
 
 ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
@@ -115,6 +126,15 @@ lazy val root = (project in file("."))
   .settings(
     name := "zio-rite-of-passage"
   )
-  .aggregate(server, app)
-  .dependsOn(server, app)
+  .aggregate(foundations, server)
+  .dependsOn(foundations, server)
 
+
+// CLAUDE ADD... IDE AUTO-COMPLETE FIX
+// not in the course because IntelliJ does not rely on it
+// while nvim metals does...
+// ThisBuild / semanticdbEnabled := true
+// ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+ThisBuild / bloopExportJarClassifiers := Some(Set("sources"))
+Global / semanticdbEnabled := true
+Global / semanticdbVersion := scalafixSemanticdb.revision

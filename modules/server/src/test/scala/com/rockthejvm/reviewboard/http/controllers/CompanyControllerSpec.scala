@@ -14,20 +14,26 @@ import sttp.tapir.server.ServerEndpoint
 
 import com.rockthejvm.reviewboard.syntax.*
 import com.rockthejvm.reviewboard.services.*
+import com.rockthejvm.reviewboard.domain.data.*
 import com.rockthejvm.reviewboard.http.requests.*
 import com.rockthejvm.reviewboard.domain.data.Company
 
 object CompanyControllerSpec extends ZIOSpecDefault {
 
   // 'monad error' => a capability to map, flatMap & throw errors
-  // needed to create the backendStub used in the test...
+  // REQ: needed to create the backendStub used in the test...
   private given zioMonadError: MonadError[Task] = new RIOMonadError[Any]
                                                   // a monad error with a REQUIREMENT,
                                                   // which happens to be Any in that case
 
   private val rtjvm = Company(id=1, name="Rock the JVM", slug="rock-the-jvm", url="rockthejvm.com")
 
-  private val serviceStub = new CompanyService {
+  /*
+   * REQUIREMENT FOR COMPANYCONTROLLER: we need a CompanyService
+   */
+  private val companyServiceStub = new CompanyService {
+
+    // SIMPLY "HARDCODE" ALL THE METHODS...
 
     override def create(req: CompanyCreationRequest): Task[Company] = ZIO.succeed(rtjvm)
 
@@ -42,6 +48,21 @@ object CompanyControllerSpec extends ZIOSpecDefault {
 
   }
 
+
+  // NOTE: we don't care about the implementation
+  // We just NEED the dependency
+  private val jwtServiceStub = new JWTService {
+  override def startSession(user: User): Task[UserSession]  =
+    ZIO.succeed(UserSession(user.email, "SOME_TOKEN", 99999999L))
+  override def verifyToken(token: String): Task[Identifiers] =
+    ZIO.succeed(Identifiers(123L, "joe@x.com"))
+  }
+
+  /*
+   * REQ: a SYNCHRONOUS http server
+   * allowing to send http requests as args to funcs
+   * and getting back an http response SYNCRHONOUSLY
+   */
   private def backendStubZIO(getEndpoint: CompanyController => ServerEndpoint[Any, Task]) = for {
       // 1. CREATE THE CONTROLLER
       controller <- CompanyController.makeZIO
@@ -94,6 +115,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
                         // we must therefore SERIALIZE TO JSON using zio.json's extension methods
                         CompanyCreationRequest("Rock the JVM", "rockthejvm.com").toJson)
                         // toJson requires an implicit encoder, found in generator in sttp.tapir.generic.auto.*
+                      .header("Authorization", "Bearer ANYTHING_SINCE_MOCKED")
                       .send(backendStub) // synchronously send this request to the backendstub
 
         } yield response.body // a string
@@ -152,7 +174,10 @@ object CompanyControllerSpec extends ZIOSpecDefault {
 
       },
 
-  ).provide(ZLayer.succeed(serviceStub))
+  ).provide(
+    ZLayer.succeed(companyServiceStub), // needed by controller <- CompanyController.makeZIO
+    ZLayer.succeed(jwtServiceStub)
+  )
 }
 
 

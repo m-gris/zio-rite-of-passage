@@ -35,5 +35,6 @@ final case class CompanyCreationRequest(
 }
 
 object CompanyCreationRequest {
+  // TODO: LOOK INTO TYPE CLASS DERIVATION
   given codec: JsonCodec[CompanyCreationRequest] = DeriveJsonCodec.gen[CompanyCreationRequest]
 }

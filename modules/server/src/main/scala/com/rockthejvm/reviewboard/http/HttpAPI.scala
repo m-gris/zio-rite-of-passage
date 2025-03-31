@@ -14,8 +14,10 @@ object HttpAPI {
   def makeControllers = for {
     health    <- HealthController.makeZIO
     companies <- CompanyController.makeZIO
+    reviews   <- ReviewController.makeZIO
+    users     <- UserController.makeZIO
     // TO DO - add more controllers
-    } yield  List(health, companies)
+    } yield  List(health, companies, reviews, users)
 
   val endpointsZIO = makeControllers.map(gatherRoutes)
 }

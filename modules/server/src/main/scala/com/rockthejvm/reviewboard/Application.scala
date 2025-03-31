@@ -25,10 +25,22 @@ object Application extends ZIOAppDefault {
   } yield ()
 
   override def run = serverProgram.provide(
+
     Server.default,
+
+    // SERVICES
+    UserServiceLive.layer,
     CompanyServiceLive.layer,
-    CompanyRepositoryLive.layer,
+    ReviewServiceLive.layer,
+    JWTServiceLive.configuredLayer,
+    EmailServiceLive.configuredLayer,
+
+    // REPOS
     Repository.dataLayer,
+    UserRepositoryLive.layer,
+    ReviewRepositoryLive.layer,
+    CompanyRepositoryLive.layer,
+    OTPRepositoryLive.configuredLayer,
   )
 
 }

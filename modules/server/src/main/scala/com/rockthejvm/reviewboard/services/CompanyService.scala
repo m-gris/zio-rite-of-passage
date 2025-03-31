@@ -30,7 +30,7 @@ trait CompanyService {
     For now... below it looks like we're "just" delegating to the repo...
     but as the business becomes more complex, this separation will prove usefull.
 
-    Separation between HTTP (service) , BUSINESS (service) , DATABASE (repo)
+    Separation between HTTP (controller) , BUSINESS (service) , DATABASE (repo)
 
  */
 class CompanyServiceLive private (repo: CompanyRepository) extends CompanyService {

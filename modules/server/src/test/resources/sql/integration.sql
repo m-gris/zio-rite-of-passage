@@ -1,7 +1,3 @@
-CREATE DATABASE reviewboard;
-\c reviewboard;
-
-
 CREATE TABLE IF NOT EXISTS companies (
     id BIGSERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
@@ -37,6 +33,7 @@ CREATE TABLE IF NOT EXISTS users (
     created TIMESTAMP NOT NULL DEFAULT now(),
     updated TIMESTAMP NOT NULL DEFAULT now()
 );
+
 
 CREATE TABLE IF NOT EXISTS otps (
     email TEXT PRIMARY KEY,

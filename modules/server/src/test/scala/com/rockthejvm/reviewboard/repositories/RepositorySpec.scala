@@ -13,12 +13,14 @@ import com.rockthejvm.reviewboard.domain.data.Company
 
 trait RepositorySpec extends ZIOSpecDefault {
 
+  val initScript: String
+
   // TEST CONTAINERS
   // spawn a postgres on Docker just for the test
   def createContainer() = {
     val container : PostgreSQLContainer[Nothing] =
         PostgreSQLContainer("postgres")
-          .withInitScript("sql/companies.db")
+          .withInitScript(initScript)
     container.start()
     container
   }

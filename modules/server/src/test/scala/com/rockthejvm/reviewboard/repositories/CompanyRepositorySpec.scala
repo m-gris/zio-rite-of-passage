@@ -14,6 +14,8 @@ import com.rockthejvm.reviewboard.domain.data.Company
 
 object CompanyRepositorySpec extends ZIOSpecDefault with RepositorySpec {
 
+  override val initScript  = "sql/companies.sql"
+
   private val rtjvm = Company(-1L, "Rock The JVM", "rockthejvm.com", "rock-the-jvm")
 
   private def genString(): String =
