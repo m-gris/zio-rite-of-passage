@@ -56,3 +56,4 @@ project/project/
 modules/server/src/main/scala/com/rockthejvm/reviewboard/http/endpoints/target/.history3
 modules/app/node_modules
 modules/app/.parcel-cache
+modules/app/dist
