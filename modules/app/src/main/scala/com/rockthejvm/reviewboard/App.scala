@@ -7,14 +7,20 @@ import frontroute.LinkHandler
 import com.raquo.laminar.api.L.{*, given}
 import com.raquo.airstream.ownership.OneTimeOwner
 
+import com.rockthejvm.reviewboard.components.*
 
 object App {
+
+  val app = div(
+    Router()
+    ).amend(LinkHandler.bind) // for internal links
 
   def main(args: Array[String]): Unit = {
     val containerNode = dom.document.querySelector("#app")
     render(
       containerNode,
-      Tutorial.clicksVar
+      app,
+      // Tutorial.clicksVar
     )
   }
 }
