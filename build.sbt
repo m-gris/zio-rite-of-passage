@@ -136,5 +136,5 @@ lazy val root = (project in file("."))
 // ThisBuild / semanticdbEnabled := true
 // ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
 ThisBuild / bloopExportJarClassifiers := Some(Set("sources"))
-Global / semanticdbEnabled := true
-Global / semanticdbVersion := scalafixSemanticdb.revision
+// Global / semanticdbEnabled := true
+// Global / semanticdbVersion := scalafixSemanticdb.revision
