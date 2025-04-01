@@ -12,7 +12,8 @@ import com.rockthejvm.reviewboard.components.*
 object App {
 
   val app = div(
-    Router()
+    Header(),
+    Router(),
     ).amend(LinkHandler.bind) // for internal links
 
   def main(args: Array[String]): Unit = {
