@@ -4,6 +4,8 @@ import frontroute.*
 import org.scalajs.dom
 import com.raquo.laminar.api.L.{*, given}
 
+import com.rockthejvm.reviewboard.pages.*
+
 object Router {
 
   def apply() =
@@ -26,17 +28,17 @@ object Router {
           (pathEnd | path("companies"))  {
             // localhost:1234 or  localhost:1234/ or localhost:1234/companies or localhost:1234/companies/
             // all redirect to the main page
-            div("main page")
+            CompaniesPage()
           },
 
           path("login") {
             // localhost:1234/login
-            div("login page")
+            LoginPage()
           },
 
           path("signup") {
             // localhost:1234/signup
-            div("signup page")
+            SignUpPage()
           },
 
           noneMatched {
