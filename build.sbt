@@ -6,6 +6,9 @@ ThisBuild / scalacOptions ++= Seq(
   "-feature"
 )
 
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := "latest.release"
+
 ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
 
 val zioVersion        = "2.0.9"
@@ -70,7 +73,8 @@ lazy val common = crossProject(JVMPlatform, JSPlatform)
 
 lazy val server = (project in file("modules/server"))
   .settings(
-    libraryDependencies ++= serverDependencies
+    libraryDependencies ++= serverDependencies,
+    semanticdbEnabled               := true,
   )
   .dependsOn(common.jvm)
 
