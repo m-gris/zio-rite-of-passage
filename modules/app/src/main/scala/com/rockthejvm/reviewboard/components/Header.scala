@@ -4,6 +4,8 @@ import frontroute.*
 import org.scalajs.dom
 import com.raquo.laminar.codecs.*
 import com.raquo.laminar.api.L.{*, given}
+import scala.scalajs.js.annotation.*
+import scala.scalajs.js // object referencing the entire JavaScript Api
 
 object Header {
   def apply() = // boiler-platty stuff
@@ -17,7 +19,7 @@ object Header {
             cls := "navbar navbar-expand-lg navbar-light JVM-nav",
             div(
               cls := "container",
-              // TODO logo
+              renderLogo(),
               button(
                 cls                                         := "navbar-toggler",
                 `type`                                      := "button",
@@ -42,6 +44,21 @@ object Header {
     )
   )
 
+  @js.native // bridges scala native strings to js native strings
+  @JSImport("/static/img/fiery-lava 128x128.png", JSImport.Default)
+  private val logoImage: String = js.native
+
+  private def renderLogo() =
+    a(
+      href := "/", // i.e clicking on the logo redirects to the home page
+      cls := "navbar-brand",
+      img(
+        cls := "home-logo",
+        src := logoImage,
+        alt := "Rock the JVM" // alt => "alternative text", i.e if the image can't be loaded
+        )
+  )
+
   val navLinks = List(
     NavLink("Companies", "/companies"),
     NavLink("Log In", "/login"),
@@ -54,6 +71,7 @@ object Header {
     )
 
   private def render(navLinks: List[NavLink]): List[HtmlElement] = navLinks.map(render)
+
 
 }
 
