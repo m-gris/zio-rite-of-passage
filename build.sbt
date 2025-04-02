@@ -1,5 +1,3 @@
-Global / onChangedBuildSource := ReloadOnSourceChanges
-
 ThisBuild / version      := "0.1.0-SNAPSHOT"
 ThisBuild / scalaVersion := "3.3.5"
 ThisBuild / scalacOptions ++= Seq(
@@ -8,33 +6,7 @@ ThisBuild / scalacOptions ++= Seq(
   "-feature"
 )
 
-
-// CLAUDE: Make all warnings fatal
-scalacOptions ++= Seq(
-  "-Werror",                // Turns all warnings into errors
-  "-deprecation",           // Emit warning for usage of deprecated APIs
-  "-feature",               // Emit warning for usage of features that should be imported explicitly
-  "-unchecked",             // Enable additional warnings where generated code depends on assumptions
-  "-Wunused:all"            // Warn about all unused elements
-)
-
-
 ThisBuild / testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
-
-ThisBuild / semanticdbEnabled := true
-ThisBuild / semanticdbVersion := "4.8.8"  // You can use the latest version
-
-// CLAUDE: Make all warnings fatal
-scalacOptions ++= Seq(
-  "-Werror",                // Turns all warnings into errors
-  "-deprecation",           // Emit warning for usage of deprecated APIs
-  "-feature",               // Emit warning for usage of features that should be imported explicitly
-  "-unchecked",             // Enable additional warnings where generated code depends on assumptions
-  "-Wunused:all",            // Warn about all unused elements
-  "-explain"
-)
-
-
 
 val zioVersion        = "2.0.9"
 val tapirVersion      = "1.2.6"
@@ -44,8 +16,6 @@ val sttpVersion       = "3.8.8"
 val javaMailVersion   = "1.6.2"
 val stripeVersion     = "22.12.0"
 
-// for endpoints that can be used both by Front & Back Ends
-// (i.e this is one of scala's superpowers as a fullstack language)
 val commonDependencies = Seq(
   "com.softwaremill.sttp.tapir"   %% "tapir-sttp-client" % tapirVersion,
   "com.softwaremill.sttp.tapir"   %% "tapir-json-zio"    % tapirVersion,
@@ -126,15 +96,5 @@ lazy val root = (project in file("."))
   .settings(
     name := "zio-rite-of-passage"
   )
-  .aggregate(foundations, server)
-  .dependsOn(foundations, server)
-
-
-// CLAUDE ADD... IDE AUTO-COMPLETE FIX
-// not in the course because IntelliJ does not rely on it
-// while nvim metals does...
-// ThisBuild / semanticdbEnabled := true
-// ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
-ThisBuild / bloopExportJarClassifiers := Some(Set("sources"))
-// Global / semanticdbEnabled := true
-// Global / semanticdbVersion := scalafixSemanticdb.revision
+  .aggregate(server, app)
+  .dependsOn(server, app)
