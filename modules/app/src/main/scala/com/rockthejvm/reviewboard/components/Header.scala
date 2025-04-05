@@ -8,6 +8,7 @@ import scala.scalajs.js.annotation.*
 import scala.scalajs.js // object referencing the entire JavaScript Api
 
 import com.rockthejvm.reviewboard.common.*
+
 object Header {
   def apply() = // boiler-platty stuff
     div(
@@ -45,17 +46,13 @@ object Header {
     )
   )
 
-  @js.native // bridges scala native strings to js native strings
-  @JSImport("/static/img/fiery-lava 128x128.png", JSImport.Default)
-  private val logoImage: String = js.native
-
   private def renderLogo() =
     a(
       href := "/", // i.e clicking on the logo redirects to the home page
       cls := "navbar-brand",
       img(
         cls := "home-logo",
-        src := logoImage,
+        src := Constants.logo,
         alt := "Rock the JVM" // alt => "alternative text", i.e if the image can't be loaded
         )
   )
