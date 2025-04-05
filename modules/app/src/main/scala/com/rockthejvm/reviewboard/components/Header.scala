@@ -7,6 +7,7 @@ import com.raquo.laminar.api.L.{*, given}
 import scala.scalajs.js.annotation.*
 import scala.scalajs.js // object referencing the entire JavaScript Api
 
+import com.rockthejvm.reviewboard.common.*
 object Header {
   def apply() = // boiler-platty stuff
     div(
@@ -77,12 +78,3 @@ object Header {
 
 case class NavLink(label: String, location: String)
 
-object Anchors {
-
-  def renderNavLink(label: String, location: String, cssClass: String = "") =
-    a(
-      href := location,
-      cls  := cssClass,
-      label
-      )
-}
