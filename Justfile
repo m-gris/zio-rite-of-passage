@@ -1,35 +1,32 @@
 # Clean build artifacts and tooling state that commonly cause issues
 clean_tooling:
     # Clean BSP state
-    find . -name ".bsp" -type d -exec echo "Cleaning BSP state: {}" \; -exec rm -rf {} +
+    fd -H -t d "^\.bsp$" -x echo "Cleaning BSP state: {}" \; -x rm -rf {} \;
     # Clean Metals LSP state
-    find . -name ".metals" -type d -exec echo "Cleaning Metals state: {}" \; -exec rm -rf {} +
-    find . -name "metals.sbt" -type f -exec echo "Cleaning Metals sbt file: {}" \; -exec rm -f {} +
+    fd -H -t d "^\.metals$" -x echo "Cleaning Metals state: {}" \; -x rm -rf {} \;
+    fd -H -t f "^metals\.sbt$" -x echo "Cleaning Metals sbt file: {}" \; -x rm -f {} \;
     # Clean Bloop compilation server files
-    find . -name ".bloop" -type d -exec echo "Cleaning Bloop state: {}" \; -exec rm -rf {} +
+    fd -H -t d "^\.bloop$" -x echo "Cleaning Bloop state: {}" \; -x rm -rf {} \;
     # Clean lock files that might cause SBT to hang
-    find . -name "*.lock" -type f -exec echo "Cleaning lock files: {}" \; -exec rm -f {} +
+    fd -H -t f ".*\.lock$" -x echo "Cleaning lock files: {}" \; -x rm -f {} \;
     @echo "Tooling state cleaned. Restart your IDE/editor for changes to take effect."
-
 # Clean compilation artifacts
 clean_artifacts:
     # Clean target directories (compiled code)
-    find . -name "target" -type d -exec echo "Cleaning compilation artifacts: {}" \; -exec rm -rf {} +
+    fd -H -t d "^target$" -x echo "Cleaning compilation artifacts: {}" \; -x rm -rf {} \;
     # Clean nested project artifacts (but preserve project/plugins.sbt!)
-    find ./project/project -maxdepth 1 -type d -exec echo "Cleaning nested project artifacts: {}" \; -exec rm -rf {} +
+    fd -H -t d "^project$" -d 1 --base-directory ./project/project -x echo "Cleaning nested project artifacts: {}" \; -x rm -rf {} \;
     # Clean class files
-    find . -name "*.class" -type f -exec echo "Cleaning class files: {}" \; -exec rm -f {} +
+    fd -H -t f ".*\.class$" -x echo "Cleaning class files: {}" \; -x rm -f {} \;
     @echo "Build artifacts cleaned. Run 'sbt compile' to rebuild."
-
 # Clean IDE-specific files
 clean_ide:
     # Remove IntelliJ IDEA files
-    find . -name ".idea" -type d -exec echo "Cleaning IDEA files: {}" \; -exec rm -rf {} +
-    find . -name "*.iml" -type f -exec echo "Cleaning IDEA module files: {}" \; -exec rm -f {} +
+    fd -H -t d "^\.idea$" -x echo "Cleaning IDEA files: {}" \; -x rm -rf {} \;
+    fd -H -t f ".*\.iml$" -x echo "Cleaning IDEA module files: {}" \; -x rm -f {} \;
     # Clean VS Code logs (preserve settings)
-    find . -name ".vscode" -type d -exec echo "Cleaning VS Code logs: {}" \; -exec rm -f {}/*.log {}/*.bak \;
+    fd -H -t d "^\.vscode$" -x bash -c 'echo "Cleaning VS Code logs: {}" && rm -f {}/*.log {}/*.bak' \;
     @echo "IDE files cleaned."
-
 # Reset project state (safe version)
 clean_everything:
     @echo "Resetting project state..."
