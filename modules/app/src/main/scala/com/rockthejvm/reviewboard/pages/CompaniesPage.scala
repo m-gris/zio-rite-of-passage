@@ -1,12 +1,11 @@
 package com.rockthejvm.reviewboard.pages
 
 import zio.*
-import sttp.model.Uri.UriContext
+
 import com.raquo.laminar.codecs.*
 import com.raquo.laminar.api.L.{*, given}
-import sttp.client3.impl.zio.FetchZioBackend
-import sttp.tapir.client.sttp.SttpClientInterpreter
 
+import com.rockthejvm.reviewboard.core.ZJS.*
 import com.rockthejvm.reviewboard.components.Anchors
 import com.rockthejvm.reviewboard.domain.data.Company
 import com.rockthejvm.reviewboard.http.endpoints.CompanyEndpoints
@@ -15,44 +14,13 @@ import com.rockthejvm.reviewboard.http.endpoints.CompanyEndpoints
 
 object CompaniesPage {
 
-  val dummyCompany = Company(1L, "zi dumpany", "dumpany name", "dummy.com", Some("Ubud"), Some("Bali"))
-
   // for the zio effect to "push" its result to
   // so that laminar can use it as an event stream
   val companiesBus = EventBus[List[Company]]()
 
   def performBackendCall(): Unit = {
-    val companyEndpoint =
-      // reminder: this create an ANONYMOUS CLASS
-      // that implements the `CompanyEndpoints` trait
-      new CompanyEndpoints {} // no abstract method... no override...
-    val getAllCompaniesEndpoint = companyEndpoint.getAllEndpoint
-    val backend = FetchZioBackend() // an http backend can send request & expect resposnes
-    val interpreter = SttpClientInterpreter()
-    val request = interpreter
-        .toRequestThrowDecodeFailures(getAllCompaniesEndpoint, Some(uri"http://localhost:8080"))
-        .apply( () /* the R of the endpoint... in our case Unit */)
-    val companiesZIO = backend.send(request)
-                              .map(response => response.body)
-                              // submerge failures with ZIO.absolve (the opposite of either)
-                              // turning a ZIO[R, Nothing, Either[E, A]] into a ZIO[R, E, A]
-                              .absolve
-
-    // NEED TO RUN THE ZIO EFFET 'MANUALLY' / 'UNSAFELY'
-    // Because our frontend is not a ZIO Native APP (we use Laminar for the "logic")
-    // ZIO will be used as an 'auxiliary' to fetch things from the backend
-    // We will do so by:
-    //  - running the effect
-    //  - and surface its output as an event stream in laminar
-    //  ( by pushing the effect's output to an event bus)
-    Unsafe.unsafe { implicit unsafe =>
-      Runtime.default.unsafe.fork(
-        companiesZIO.tap( /* when the effect completes */
-          list => ZIO.attempt(companiesBus.emit(list))
-          )
-        )
-    }
-
+    val companiesZIO = useBackend(_.companyEndpoints.getAllEndpoint(()))
+    companiesZIO.emitTo(companiesBus)
   }
 
   def apply() =
