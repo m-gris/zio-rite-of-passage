@@ -9,6 +9,7 @@ import com.rockthejvm.reviewboard.core.ZJS.*
 import com.rockthejvm.reviewboard.components.Anchors
 import com.rockthejvm.reviewboard.domain.data.Company
 import com.rockthejvm.reviewboard.http.endpoints.CompanyEndpoints
+import com.rockthejvm.reviewboard.components.FilterPannel
 
 
 
@@ -45,7 +46,7 @@ object CompaniesPage {
             cls := "row jvm-recent-companies-body",
             div(
               cls := "col-lg-4",
-              div("TODO filter panel here")
+              FilterPannel()
             ),
             div(
               cls := "col-lg-8",
