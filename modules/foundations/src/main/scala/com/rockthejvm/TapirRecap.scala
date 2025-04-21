@@ -64,11 +64,11 @@ object TapirRecap extends  ZIOAppDefault {
   val simpleServerProgram = Server.serve(httpApp)
 
   /* side note
-   * CORS (Cross-Origin Resource Sharing) 
+   * CORS (Cross-Origin Resource Sharing)
    * a security mechanism that lets web servers specify which origins:
    *    - domains
    *    - schemes
-   *    - ports 
+   *    - ports
    * are allowed to access their resources
    * preventing unauthorized cross-origin requests while enabling legitimate ones.
    */
@@ -100,7 +100,7 @@ object TapirRecap extends  ZIOAppDefault {
 
 
   // get by id
-  val getByIDEndpoint: ServerEndpoint[Any, Task] = 
+  val getByIDEndpoint: ServerEndpoint[Any, Task] =
       endpoint
         .tags("jobs" :: Nil)
         .name("getByID")

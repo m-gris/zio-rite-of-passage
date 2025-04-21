@@ -17,7 +17,6 @@ import sttp.tapir.server.interceptor.cors.CORSInterceptor
 
 object Application extends ZIOAppDefault {
 
-  // val serverProgram: ZIO[Server, IOException, Unit] = for {
   val serverProgram = for {
 
     endpoints  <- HttpAPI.endpointsZIO
@@ -45,8 +44,8 @@ object Application extends ZIOAppDefault {
 
     // SERVICES
     UserServiceLive.layer,
-    CompanyServiceLive.layer,
     ReviewServiceLive.layer,
+    CompanyServiceLive.layer,
     JWTServiceLive.configuredLayer,
     EmailServiceLive.configuredLayer,
 

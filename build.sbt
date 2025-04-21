@@ -102,3 +102,4 @@ lazy val root = (project in file("."))
   )
   .aggregate(server, app)
   .dependsOn(server, app)
+

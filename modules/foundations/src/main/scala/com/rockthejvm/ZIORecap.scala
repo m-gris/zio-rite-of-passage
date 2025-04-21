@@ -8,7 +8,7 @@ import javax.sql.ConnectionPoolDataSource
 object ZIORecap extends ZIOAppDefault {
 
   // reminder ZIOs are data structures DESCRIBING arbitrary computations (including side effects)
-  // aka "effects" = "COMPUTATIONS AS VALUES"
+  // "effects" = "COMPUTATIONS AS VALUES"
 
   // basics
   val meaningOfLife: ZIO[ // 3 type parameters: R, E, A
@@ -39,11 +39,13 @@ object ZIORecap extends ZIOAppDefault {
   // ZIO will catch errors / throwables and store those AS DATA
   // ==>>>> "ERRORS AS DATA" <<<===
 
+
   val anAttempt: ZIO[Any, Throwable, Int] /* aka Task[Int] */ = ZIO.attempt {
     // some expression that might fail...
     val word: String = null
     word.length
   }
+
 
   // allows to catch errors "effectfully" (i.e a error value wrapped in an effect)
   val caughtError = anAttempt.catchAll(e => ZIO.succeed("Failed - returning something else"))

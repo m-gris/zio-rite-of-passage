@@ -11,7 +11,8 @@ object QuillRecap extends ZIOAppDefault {
   /* side note: here the term 'REPOSITORY'
    * refers to the "REPOSITORY PATTERN"
    * an abstraction layer between business logic and data persistence
-   * that provides a collection-like interface for accessing domain objects
+   *
+   * Quill provides a collection-like interface for accessing domain objects
    * while hiding the complexities of database operations, mapping, and query construction.
    *
    * REPOSITORY => a higher-level INTERFACE for data STORAGE OPERATIONS.
@@ -76,10 +77,10 @@ class JobRepositoryLive(
     how ? : by eliminating the overhead of a method call
    */
   inline given schema: SchemaMeta[Job] = schemaMeta[Job]("jobs") // specify the table name
-  inline given insMeta: InsertMeta[Job] = insertMeta[Job](exclude= t => t.id) // colums to be 'excluded' (i.e postgres will handle the id on its own)
-  inline given upMeta: UpdateMeta[Job] = updateMeta[Job](_.id) // colums to be 'excluded' (i.e postgres will handle the id on its own)
+  inline given insMeta: InsertMeta[Job] = insertMeta[Job](exclude = t => t.id) // colums to be 'excluded' (i.e postgres will handle the id on its own)
+  inline given upMeta: UpdateMeta[Job] = updateMeta[Job](_.id) // colums to be 'excluded'
 
-  // STEP 3 - the actual ... logic ???
+  // STEP 3 - the actual ... logic
   def create(job: Job): Task[Job] =
     run {
       // a MACRO-BASED method from Quill
