@@ -34,6 +34,10 @@ class CompanyController private (
   }
 
 
+  val allFilters: ServerEndpoint[Any, Task] = allFiltersEndpoint.serverLogic { _ =>
+   companyService.getAllFilters.either
+  }
+
   val getById: ServerEndpoint[Any, Task] = getByIdEndpoint.serverLogic{ id =>  // nota: NOT A PAYLOAD, but a PATH PARAMETER
       ZIO
         .attempt(id.toLong)
@@ -43,7 +47,17 @@ class CompanyController private (
         }.either
       }
 
-  override val routes = List(create, getAll, getById)
+
+  /*
+   * Route order is critical for correct path matching:
+   * - More specific routes must come before more general ones
+   * - 'allFilters' must precede 'getById' because:
+   *   - 'getById' matches any path pattern '/companies/{id}'
+   *   - 'allFilters' uses path '/companies/filters'
+   *   - if ordered incorrectly, '/companies/filters' would be captured by 'getById'
+   *     with 'filters' interpreted as the {id} parameter
+   */
+  override val routes = List(create, getAll, allFilters, getById)
 
 }
 

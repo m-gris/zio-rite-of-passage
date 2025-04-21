@@ -20,6 +20,7 @@ trait CompanyService {
   def getAll: Task[List[Company]]
   def getById(id: Long): Task[Option[Company]]
   def getBySlug(slug: String): Task[Option[Company]]
+  def getAllFilters: Task[CompanyFilter]
 }
 
 
@@ -43,6 +44,9 @@ class CompanyServiceLive private (repo: CompanyRepository) extends CompanyServic
   override def getById(id: Long): Task[Option[Company]] = repo.getById(id)
 
   override def getBySlug(slug: String): Task[Option[Company]] = repo.getBySlug(slug)
+
+  override def getAllFilters: Task[CompanyFilter] = repo.uniqueAttributes
+
 }
 
 object CompanyServiceLive {
@@ -70,6 +74,8 @@ class CompanyServiceDummy extends CompanyService {
   override def getById(id: Long): Task[Option[Company]] = ZIO.succeed(db.get(id))
 
   override def getBySlug(slug: String): Task[Option[Company]] = ZIO.succeed(db.values.find(_.slug == slug))
+
+  override def getAllFilters: Task[CompanyFilter] = ???
 
 }
 

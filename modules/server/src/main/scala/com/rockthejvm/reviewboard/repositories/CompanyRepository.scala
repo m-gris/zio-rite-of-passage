@@ -3,7 +3,8 @@ package com.rockthejvm.reviewboard.repositories
 import zio.*
 import io.getquill.*
 import io.getquill.jdbczio.Quill
-import com.rockthejvm.reviewboard.domain.data.Company
+
+import com.rockthejvm.reviewboard.domain.data.*
 
 
 trait CompanyRepository {
@@ -13,6 +14,7 @@ trait CompanyRepository {
   def getById(id: Long): Task[Option[Company]]
   def getBySlug(slug: String): Task[Option[Company]]
   def getAll: Task[List[Company]]
+  def uniqueAttributes: Task[CompanyFilter]
 }
 
 
@@ -73,13 +75,26 @@ class CompanyRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends C
                 }
     } yield updated
 
-  override def delete(id: Long): Task[Company] = 
+  override def delete(id: Long): Task[Company] =
     run {
       query[Company]
         .filter(_.id == lift(id))
         .delete
         .returning(x => x)
     }
+
+  override def uniqueAttributes: Task[CompanyFilter] =
+    for {
+      locations   <- run(query[Company].map(_.location).distinct)
+      countries   <- run(query[Company].map(_.country).distinct)
+      industries  <- run(query[Company].map(_.industry).distinct)
+      // tags        <- run(query[Company].map(_.tags).map(_.flatten.toSet.toList))
+    } yield CompanyFilter(
+              locations=locations.flatten,
+              countries=countries.flatten,
+              industries=industries.flatten,
+              List() // tags=tags
+            )
 
 }
 
