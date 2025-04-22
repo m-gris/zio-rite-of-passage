@@ -38,6 +38,10 @@ class CompanyController private (
    companyService.getAllFilters.either
   }
 
+  val search: ServerEndpoint[Any, Task] = searchEndpoint.serverLogic { filter =>
+      companyService.search(filter).either
+    }
+
   val getById: ServerEndpoint[Any, Task] = getByIdEndpoint.serverLogic{ id =>  // nota: NOT A PAYLOAD, but a PATH PARAMETER
       ZIO
         .attempt(id.toLong)
@@ -57,7 +61,7 @@ class CompanyController private (
    *   - if ordered incorrectly, '/companies/filters' would be captured by 'getById'
    *     with 'filters' interpreted as the {id} parameter
    */
-  override val routes = List(create, getAll, allFilters, getById)
+  override val routes = List(create, getAll, allFilters, search, getById)
 
 }
 

@@ -15,6 +15,7 @@ trait CompanyRepository {
   def getBySlug(slug: String): Task[Option[Company]]
   def getAll: Task[List[Company]]
   def uniqueAttributes: Task[CompanyFilter]
+  def search(filter: CompanyFilter): Task[List[Company]]
 }
 
 
@@ -95,6 +96,23 @@ class CompanyRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends C
               industries=industries.flatten,
               List() // tags=tags
             )
+
+  override def search(filter: CompanyFilter): Task[List[Company]] =
+    if filter.isEmpty then getAll
+    else run {
+      query[Company]
+        .filter { company =>
+          liftQuery(filter.locations.toSet).contains(company.location) ||
+          liftQuery(filter.countries.toSet).contains(company.country) ||
+          liftQuery(filter.industries.toSet).contains(company.industry) ||
+          query[Company]
+            .filter(_.id == company.id)
+            .concatMap(_.tags) // List[Tags]
+            .filter(tag => liftQuery(filter.tags.toSet).contains(tag))
+            .nonEmpty
+
+        }
+    }
 
 }
 

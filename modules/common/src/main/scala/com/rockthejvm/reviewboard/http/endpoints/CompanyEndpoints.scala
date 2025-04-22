@@ -52,4 +52,14 @@ trait CompanyEndpoints extends BaseEndpoint {
       .get
       .out(jsonBody[CompanyFilter])
 
+  val searchEndpoint =
+    baseEndpoint
+      .tag("companies")
+      .name("search")
+      .description("Get companies based on filters")
+      .in("companies" / "search")
+      .post
+      .in(jsonBody[CompanyFilter])
+      .out(jsonBody[List[Company]])
+
 }

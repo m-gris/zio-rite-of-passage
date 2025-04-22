@@ -4,8 +4,8 @@ import scala.collection.mutable
 
 import zio.*
 
-import com.rockthejvm.reviewboard.http.requests.*
 import com.rockthejvm.reviewboard.domain.data.*
+import com.rockthejvm.reviewboard.http.requests.*
 import com.rockthejvm.reviewboard.repositories.CompanyRepository
 
 // BUSINESS LOGIC
@@ -21,6 +21,7 @@ trait CompanyService {
   def getById(id: Long): Task[Option[Company]]
   def getBySlug(slug: String): Task[Option[Company]]
   def getAllFilters: Task[CompanyFilter]
+  def search(filter: CompanyFilter): Task[List[Company]]
 }
 
 
@@ -46,6 +47,9 @@ class CompanyServiceLive private (repo: CompanyRepository) extends CompanyServic
   override def getBySlug(slug: String): Task[Option[Company]] = repo.getBySlug(slug)
 
   override def getAllFilters: Task[CompanyFilter] = repo.uniqueAttributes
+
+  override def search(filter: CompanyFilter): Task[List[Company]] = repo.search(filter)
+
 
 }
 
@@ -76,6 +80,8 @@ class CompanyServiceDummy extends CompanyService {
   override def getBySlug(slug: String): Task[Option[Company]] = ZIO.succeed(db.values.find(_.slug == slug))
 
   override def getAllFilters: Task[CompanyFilter] = ???
+
+  override def search(filter: CompanyFilter): Task[List[Company]] = ???
 
 }
 
