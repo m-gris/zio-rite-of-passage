@@ -72,6 +72,18 @@ object FilterPannel {
 
       }
 
+  // emit new CompanyFilter when someone clicks on `Apply` the button
+  val triggerFilters: EventStream[CompanyStream] =
+    clicksOnApplyButton // EventBus
+      .events // EventStream
+      .withCurrentValueOf(
+        // laminar combinator that will emit a new CompanyFilter
+        // based on the current value of state
+        // when there is a new value in clicksOnApplyButton.events
+        state
+        )
+
+
   def apply() =
 
     div(
