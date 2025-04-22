@@ -27,14 +27,14 @@ object FilterPannel {
   // "Reactive Variable" to surface the filters to the FrontEnd
   // We will emit a backend call to /companies/filters
   // which will emit a value on that bus
-  val possibleFilter = Var[CompanyFilter](CompanyFilter.empty /* initial value */)
+  private val possibleFilter = Var[CompanyFilter](CompanyFilter.empty /* initial value */)
 
-  val filterChecks = EventBus[FilterCheck]() // "fed" by renderCheckBox
-  val clicksOnApplyButton = EventBus[Unit]() // clicks on Apply buton
+  private val filterChecks = EventBus[FilterCheck]() // "fed" by renderCheckBox
+  private val clicksOnApplyButton = EventBus[Unit]() // clicks on Apply buton
 
   // the `apply` button, once clicked should only be clickable again
   // after a checkbox have been clicked
-  val applyButtonIsClickable: EventStream[Boolean] = clicksOnApplyButton
+  private val applyButtonIsClickable: EventStream[Boolean] = clicksOnApplyButton
                                                       .events
                                                       .mapTo(false)
                                                       .mergeWith(filterChecks
@@ -45,7 +45,7 @@ object FilterPannel {
   // 1. Map[FilterGroup, Set[String]] => 2. CompanyFilter
   // i.e mapping from FilterGroup to a Set of boxes that have been checked
   // this mapping will then be transformed into a CompanyFilter
-  val state: Signal[CompanyFilter] =
+  private val state: Signal[CompanyFilter] =
     filterChecks
       .events // event-stream
       .scanLeft(Map[Filter, Set[String]]()) { (current_map, event) =>
