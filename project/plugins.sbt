@@ -1,5 +1,6 @@
 
-addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "2.0.9")
+// USING SBT BUILD SERVER instead..
+// addSbtPlugin("ch.epfl.scala" % "sbt-bloop" % "2.0.9")
 
 addSbtPlugin("nl.gn0s1s"          % "sbt-dotenv"               % "3.0.0")
 addSbtPlugin("org.scalameta"      % "sbt-scalafmt"             % "2.3.0")
