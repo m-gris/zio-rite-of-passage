@@ -1,3 +1,8 @@
+# List available recipes
+default:
+    @just --list
+
+
 # Clean build artifacts and tooling state that commonly cause issues
 clean_tooling:
     # Clean BSP state
@@ -36,3 +41,77 @@ clean_everything:
     @echo "Project reset complete. You may need to:"
     @echo "1. Restart your IDE/editor"
     @echo "2. Run 'sbt bloopInstall' to regenerate build files"
+
+
+# Start backend server with Application class
+backend:
+    sbt "project server; runMain com.rockthejvm.reviewboard.Application"
+
+# Continuously compile frontend
+frontend-compile:
+    sbt "project app; ~fastOptJS"
+
+# Check if npm deps are installed and start frontend dev server
+frontend-serve:
+    #!/usr/bin/env bash
+    cd modules/app
+
+    # Check if node_modules exists
+    if [ ! -d "node_modules" ]; then
+        echo "Installing npm dependencies (first time setup)..."
+        npm install
+    fi
+
+    # Try to start the server
+    if npm start; then
+        echo "Server started successfully!"
+    else
+        # If it fails, we'll try fixing common issues
+        echo "Error detected. Trying to fix dependencies..."
+
+        # Install base-x explicitly (common issue with Parcel)
+        echo "Installing base-x dependency..."
+        npm install --save-dev base-x@latest
+
+        # If that doesn't work, try a clean install as last resort
+        if ! npm start; then
+            echo "Still having issues. Performing clean reinstall..."
+            rm -rf node_modules package-lock.json
+            npm cache clean --force
+            npm install
+
+            # Final attempt
+            if ! npm start; then
+                echo "Failed to start server after multiple attempts."
+                exit 1
+            fi
+        fi
+    fi
+
+# Install frontend dependencies explicitly
+frontend-install:
+    cd modules/app && npm install
+
+# One-command setup for development (opens tmux with all needed panes)
+dev:
+    #!/usr/bin/env bash
+    SESSION="zio-dev"
+
+    # Create session if it doesn't exist
+    tmux has-session -t $SESSION 2>/dev/null || tmux new-session -d -s $SESSION
+
+    # Configure windows and panes
+    tmux rename-window -t $SESSION:0 'backend'
+    tmux send-keys -t $SESSION:0 'just backend' C-m
+
+    tmux new-window -t $SESSION:1 -n 'frontend-compile'
+    tmux send-keys -t $SESSION:1 'just frontend-compile' C-m
+
+    tmux new-window -t $SESSION:2 -n 'frontend-serve'
+    tmux send-keys -t $SESSION:2 'just frontend-serve' C-m
+
+    tmux new-window -t $SESSION:3 -n 'shell'
+
+    # Attach to session
+    tmux select-window -t $SESSION:0
+    tmux attach-session -t $SESSION
