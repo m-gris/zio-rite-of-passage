@@ -105,12 +105,8 @@ class CompanyRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends C
           liftQuery(filter.locations.toSet).contains(company.location) ||
           liftQuery(filter.countries.toSet).contains(company.country) ||
           liftQuery(filter.industries.toSet).contains(company.industry) ||
-          query[Company]
-            .filter(_.id == company.id)
-            .concatMap(_.tags) // List[Tags]
-            .filter(tag => liftQuery(filter.tags.toSet).contains(tag))
-            .nonEmpty
-
+          /* NB: `&&` is psql `overlap` opeartor */
+          sql"${lift(filter.tags)} && ${company.tags}".asCondition // Boolean Predicate
         }
     }
 
