@@ -44,8 +44,11 @@ clean_everything:
 
 
 # Start backend server with Application class
-backend:
+backend-serve:
     sbt "project server; runMain com.rockthejvm.reviewboard.Application"
+
+backend-compile:
+    sbt "project server; ~compile"
 
 # Continuously compile frontend
 frontend-compile:
