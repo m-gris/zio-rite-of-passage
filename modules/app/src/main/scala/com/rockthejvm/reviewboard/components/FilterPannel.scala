@@ -26,7 +26,7 @@ object FilterPannel {
 
   // "Reactive Variable" to surface the filters to the FrontEnd
   // We will emit a backend call to /companies/filters
-  // which will emit a value on that bus
+  // which will emit a value on that bus ('phrasing' is odd...)
   private val possibleFilter = Var[CompanyFilter](CompanyFilter.empty /* initial value */)
 
   private val filterChecks = EventBus[FilterCheck]() // "fed" by renderCheckBox
@@ -73,7 +73,8 @@ object FilterPannel {
       }
 
   // emit new CompanyFilter when someone clicks on `Apply` the button
-  val triggerFilters: EventStream[CompanyStream] =
+  // i.e, informs CompaniesPage to refresh/re-search companies
+  val triggerFilters: EventStream[CompanyFilter] =
     clicksOnApplyButton // EventBus
       .events // EventStream
       .withCurrentValueOf(
@@ -100,6 +101,7 @@ object FilterPannel {
       // child.text <-- checkEvents.events.map(_.toString),
       // child.text <-- state.map(_.toString),
       // child.text <-- applyButtonIsClickable.map(_.toString),
+      // child.text <-- triggerFilters.map(_.toString),
 
       // Side node about "REACTIVITY"...
       // i.e... the div will be refreshed whenever there is a change

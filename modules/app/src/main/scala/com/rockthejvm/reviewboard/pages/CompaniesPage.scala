@@ -15,22 +15,33 @@ import com.rockthejvm.reviewboard.components.FilterPannel
 
 object CompaniesPage {
 
-  // for the zio effect to "push" its result to
-  // so that laminar can use it as an event stream
-  val companiesBus = EventBus[List[Company]]()
+  // components
+  val filterPanel = FilterPannel
 
-  def performBackendCall(): Unit = {
-    val companiesZIO = useBackend(_.companyEndpoints.getAllEndpoint(()))
-    companiesZIO.emitTo(companiesBus)
-  }
+  val companyEvents: EventStream[List[Company]] =
+
+    // "initial" populating of the page
+    useBackend(_.companyEndpoints.getAllEndpoint(())).toEventStream.mergeWith {
+
+      // updates / refreshes based on the filters...
+      filterPanel.triggerFilters.flatMap {
+      newFilter => useBackend(_.companyEndpoints.searchEndpoint(newFilter))
+                    .toEventStream
+          }
+
+      }
+
+  // // for the zio effect to "push" its result to
+  // // so that laminar can use it as an event stream
+  // val companiesBus = EventBus[List[Company]]()
+  //
+  // def performBackendCall(): Unit = {
+  //   val companiesZIO = useBackend(_.companyEndpoints.getAllEndpoint(()))
+  //   companiesZIO.emitTo(companiesBus)
+  // }
 
   def apply() =
       sectionTag(
-        //////////////////////////////////////////////////////////
-        /* allows to perform side effectcs, i.e (),
-         * when the sectionTag is added (mounted?) to the html */
-        onMountCallback(_ => performBackendCall()),
-        //////////////////////////////////////////////////////////
 
         cls := "section-1",
         div(
@@ -46,15 +57,14 @@ object CompaniesPage {
             cls := "row jvm-recent-companies-body",
             div(
               cls := "col-lg-4",
-              FilterPannel()
+              filterPanel()
             ),
             div(
               cls := "col-lg-8",
               // children is a 'reactive field'
               // that will be updated depending on
               // the event bus
-              children <-- companiesBus
-                            .events // eventStream of List[Company]
+              children <-- companyEvents
                             // rendered into
                             // an eventStream of HTML Elements
                             // pushed as children to the div we're in
