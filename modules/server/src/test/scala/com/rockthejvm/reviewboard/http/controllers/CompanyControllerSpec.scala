@@ -46,6 +46,10 @@ object CompanyControllerSpec extends ZIOSpecDefault {
       if slug == rtjvm.slug then Some(rtjvm) else None
     }
 
+    override def getAllFilters: Task[CompanyFilter] = ZIO.succeed(CompanyFilter())
+
+    override def search(filter: CompanyFilter): Task[List[Company]] = ZIO.succeed(List(rtjvm))
+
   }
 
 

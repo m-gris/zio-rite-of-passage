@@ -10,6 +10,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import com.rockthejvm.reviewboard.syntax.*
 import com.rockthejvm.reviewboard.repositories.*
 import com.rockthejvm.reviewboard.domain.data.Company
+import com.rockthejvm.reviewboard.domain.data.CompanyFilter
 
 
 object CompanyRepositorySpec extends ZIOSpecDefault with RepositorySpec {
@@ -22,7 +23,16 @@ object CompanyRepositorySpec extends ZIOSpecDefault with RepositorySpec {
     scala.util.Random.alphanumeric.take(8).mkString
 
   private def genCompany(): Company =
-    Company(-1L, genString(), genString(), genString())
+    Company(
+      id=1L,
+      name=genString(),
+      slug=genString(),
+      url=genString(),
+      location = Some(genString()),
+      country = Some(genString()),
+      industry = Some(genString()),
+      tags = (1 to 3).map(_ => genString()).toList
+    )
 
   override def spec: Spec[TestEnvironment & Scope, Any] =
     suite("Test Company Repository Spec")(
@@ -108,6 +118,21 @@ object CompanyRepositorySpec extends ZIOSpecDefault with RepositorySpec {
 
         program.assert{ case (created, fetched) => 
           created.toSet == fetched.toSet }
+      },
+
+      test("search by tag") {
+
+        val program = for {
+          repo       <- ZIO.service[CompanyRepository]
+          created    <- repo.create(genCompany())
+          fetched   <- repo.search(CompanyFilter(tags=created.tags.headOption.toList))
+        } yield (created, fetched)
+
+        program.assert{ case (created, fetched) => 
+          fetched.nonEmpty &&
+          fetched.tail.isEmpty &&
+          fetched.head == created
+        }
       },
 
       ).provide(
