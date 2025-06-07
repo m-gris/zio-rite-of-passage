@@ -50,6 +50,36 @@ backend-serve:
 backend-compile:
     sbt "project server; ~compile"
 
+db-serve:
+    #!/bin/bash
+    set -euo pipefail
+
+    # Cleanup function
+    cleanup() {
+        echo "Shutting down database..."
+        docker-compose down
+        # any other cleanup
+    }
+
+    # Register cleanup on various exit signals
+    trap cleanup EXIT SIGTERM SIGINT
+
+    echo "Starting database..."
+    docker-compose up
+
+db-up:
+    docker-compose up
+
+db-down:
+    docker-compose down
+
+# Access PostgreSQL database for exploration
+db-access:
+    docker-compose exec db psql -U docker -d reviewboard
+
+# Alternative: explore database with psql (same as db-access)
+db-explore: db-access
+
 # Continuously compile frontend
 frontend-compile:
     sbt "project app; ~fastOptJS"
