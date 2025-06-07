@@ -8,10 +8,12 @@ import com.raquo.laminar.api.L.{*, given}
 import com.raquo.airstream.ownership.OneTimeOwner
 
 import com.rockthejvm.reviewboard.components.*
+import com.rockthejvm.reviewboard.core.Session
 
 object App {
 
   val app = div(
+    onMountCallback(_ => Session.loadUserState()),
     Header(),
     Router(),
     ).amend(LinkHandler.bind) // for internal links

@@ -8,6 +8,8 @@ import scala.scalajs.js.annotation.*
 import scala.scalajs.js // object referencing the entire JavaScript Api
 
 import com.rockthejvm.reviewboard.common.*
+import com.rockthejvm.reviewboard.core.Session
+import com.rockthejvm.reviewboard.domain.data.UserSession
 
 object Header {
   def apply() = // boiler-platty stuff
@@ -37,7 +39,9 @@ object Header {
               idAttr := "navbarNav",
               ul( // un-ordered list
                 cls := "navbar-nav ms-auto menu align-center expanded text-center SMN_effect-3",
-                render(navLinks)
+
+                // render the header DEPENDING on Session.userState
+                children <-- Session.userState.signal.map(maybeSession => render(getNavLinks, maybeSession))
               )
             )
           )
@@ -57,18 +61,38 @@ object Header {
         )
   )
 
-  val navLinks = List(
-    NavLink("Companies", "/companies"),
+  val baseLinks = List(
+    NavLink("Companies", "/companies")
+    )
+
+  val unAuthedLinks = List(
     NavLink("Log In", "/login"),
     NavLink("Sign Up", "/signup"),
+  )
+
+  val authedLinks = List(
+    NavLink("Add Company", "/post"),
+    NavLink("Profile", "/profile"),
+    NavLink("Log Out", "/logout"),
     )
+
+
+  def getNavLinks(maybeSession: Option[UserSession]): List[NavLink] = {
+    if maybeSession.nonEmpty
+      then baseLinks ++ authedLinks
+    else
+      baseLinks ++ unAuthedLinks
+  }
 
   private def render(navLink: NavLink) = li(
     cls := "nav-item",
     Anchors.renderNavLink(navLink.label, navLink.location, "nav-link jvm-item")
     )
 
-  private def render(navLinks: List[NavLink]): List[HtmlElement] = navLinks.map(render)
+  private def render(
+    getNavLinks: Option[UserSession] => List[NavLink],
+    maybeSession: Option[UserSession]
+  ): List[HtmlElement] = getNavLinks(maybeSession).map(render)
 
 
 }

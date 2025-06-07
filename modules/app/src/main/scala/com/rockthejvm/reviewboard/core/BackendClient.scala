@@ -6,15 +6,16 @@ import sttp.model.Uri
 import sttp.tapir.Endpoint
 import sttp.capabilities.WebSockets
 import sttp.capabilities.zio.ZioStreams
+import sttp.client3.impl.zio.FetchZioBackend
 import sttp.tapir.client.sttp.SttpClientInterpreter
 
+import com.rockthejvm.reviewboard.http.endpoints.*
 import com.rockthejvm.reviewboard.domain.data.Company
 import com.rockthejvm.reviewboard.config.BackendClientConfig
-import com.rockthejvm.reviewboard.http.endpoints.CompanyEndpoints
-import sttp.client3.impl.zio.FetchZioBackend
 
 trait BackendClient:
   def companyEndpoints: CompanyEndpoints
+  def userEndpoints: UserEndpoints
   def sendRequestZIO[I,E<:Throwable,O]
         (endpoint: Endpoint[Unit, I, E, O, Any])
         (payload: I): Task[O]
@@ -29,6 +30,8 @@ class BackendClientLive (
     // reminder: this create an ANONYMOUS CLASS
     // that implements the `CompanyEndpoints` trait
     new CompanyEndpoints {} // no abstract method... no override...
+
+  val userEndpoints = new UserEndpoints {}
 
 
   private def prepareRequest[I,E,O](endpoint: Endpoint[Unit, I, E, O, Any]):
