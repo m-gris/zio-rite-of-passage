@@ -12,12 +12,20 @@ import sttp.tapir.client.sttp.SttpClientInterpreter
 import com.rockthejvm.reviewboard.http.endpoints.*
 import com.rockthejvm.reviewboard.domain.data.Company
 import com.rockthejvm.reviewboard.config.BackendClientConfig
+import com.rockthejvm.reviewboard.domain.data.UserSession
+
+
+case class RestrictedEndpointException(message: String) extends RuntimeException(message)
 
 trait BackendClient:
   def companyEndpoints: CompanyEndpoints
   def userEndpoints: UserEndpoints
   def sendRequestZIO[I,E<:Throwable,O]
-        (endpoint: Endpoint[Unit, I, E, O, Any])
+        (endpoint: Endpoint[Unit, I, E, O, Any]) // un-secured -> SECURITY_INPUT: Unit
+        (payload: I): Task[O]
+
+  def secureSendRequestZIO[I,E<:Throwable,O]
+        (endpoint: Endpoint[String, I, E, O, Any]) // secured -> SECURITY_INPUT: String (will be our JWT ???)
         (payload: I): Task[O]
 
 class BackendClientLive (
@@ -33,11 +41,21 @@ class BackendClientLive (
 
   val userEndpoints = new UserEndpoints {}
 
+  private val tokenOrFail = ZIO.fromOption(Session.getUserState())
+                               .orElseFail(RestrictedEndpointException("You need to log in."))
+                               .map( (s: UserSession) => s.token )
 
   private def prepareRequest[I,E,O](endpoint: Endpoint[Unit, I, E, O, Any]):
     I => Request[Either[E, O], Any] =
       interpreter
         .toRequestThrowDecodeFailures(endpoint, config.uri)
+
+  private def prepareSecureRequest[S,I,E,O](endpoint: Endpoint[S,I,E,O,Any]):
+  // token -> payload -> request
+    S  => I  => Request[Either[E, O], Any] =
+      interpreter
+        .toSecureRequestThrowDecodeFailures(endpoint, config.uri)
+
 
   override def sendRequestZIO[I,E<:Throwable,O]
         (endpoint: Endpoint[Unit, I, E, O, Any])
@@ -48,6 +66,22 @@ class BackendClientLive (
               // submerge failures with ZIO.absolve (the opposite of either)
               // turning a ZIO[R, Nothing, Either[E, A]] into a ZIO[R, E, A]
               .absolve
+
+  override def secureSendRequestZIO[I,E<:Throwable,O]
+        (endpoint: Endpoint[String, I, E, O, Any])
+        (payload: I): Task[O] = {
+          for {
+
+            token <- tokenOrFail
+            response <- backend.send(prepareSecureRequest(endpoint)(token)(payload))
+                    .map(response => response.body)
+                    // submerge failures with ZIO.absolve (the opposite of either)
+                    // turning a ZIO[R, Nothing, Either[E, A]] into a ZIO[R, E, A]
+                    .absolve
+          } yield response
+        }
+
+
 }
 
 object BackendClientLive {

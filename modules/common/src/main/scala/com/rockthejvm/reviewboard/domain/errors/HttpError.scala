@@ -15,7 +15,7 @@ object HttpError {
     HttpError(tuple._1, tuple._2, new RuntimeException(tuple._2))
 
   def decode(error: Throwable) = error match {
-    case UnauthorizedException => (StatusCode.Unauthorized, error.getMessage)
+    case UnauthorizedException(_) => (StatusCode.Unauthorized, error.getMessage)
     // TODO ... more granular error handling
     // surface out different statuses depending on the exception thrown
     case _ => ( StatusCode.InternalServerError, error.getMessage)

@@ -94,11 +94,14 @@ class OTPRepositoryLive private (
 
   override def checkOTP(email: String, otp: String): Task[Boolean] =
 
-    run(
-      selectUserWhere(email)
-        .filter(_.token == lift(otp)) // List[UserSession]
-        .nonEmpty // Boolean
-      )
+    for {
+      now <- Clock.instant
+      isValid <-     run(
+                      selectUserWhere(email)
+                        .filter( (userSession: UserSession) => userSession.token == lift(otp) && userSession.expires > lift(now.toEpochMilli) ) // List[UserSession]
+                        .nonEmpty // Boolean
+                      )
+    } yield isValid
 
 }
 

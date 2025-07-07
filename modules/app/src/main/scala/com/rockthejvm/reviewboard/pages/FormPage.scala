@@ -36,14 +36,17 @@ trait FormState {
 
 abstract class  FormPage[S <: FormState](title: String){
 
+  def blankSlate: S
+
   // REACTIVE VARIABLE
   // can be updated whenever a user types into the 'inputs'
-  val state: Var[S]
+  val state: Var[S] = Var(blankSlate)
 
   def renderChildren(): List[ReactiveHtmlElement[dom.html.Element]]
 
   def apply() =
     div(
+      onUnmountCallback(_ => state.set(blankSlate)),
       cls := "row",
       div(
         cls := "col-md-5 p-0",

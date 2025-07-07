@@ -11,7 +11,11 @@ object Session {
 
   val userState: Var[Option[UserSession]] = Var(Option.empty)
 
-  def isActive: Boolean = userState.now().nonEmpty
+  def isActive: Boolean = {
+    // WARNING: first -> reload the state to ensure token "freshness"
+    loadUserState()
+    userState.now().nonEmpty
+  }
 
   def setUserState(session: UserSession): Unit = {
     userState.set(Option(session))
@@ -38,5 +42,16 @@ object Session {
       )
 
   }
+
+  def clearUserState(): Unit = {
+    Storage.remove(stateName)
+    userState.set(Option.empty)
+  }
+
+  def getUserState(): Option[UserSession] = {
+    loadUserState() // load & clear out the UserSession/token if expired
+    Storage.get(stateName)
+  }
+
 
 }

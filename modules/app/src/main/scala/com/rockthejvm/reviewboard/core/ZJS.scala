@@ -4,6 +4,7 @@ import zio.*
 import sttp.client3.*
 import sttp.tapir.Endpoint
 import sttp.model.Uri.UriContext
+import scala.annotation.targetName
 import sttp.client3.impl.zio.FetchZioBackend
 import sttp.tapir.client.sttp.SttpClientInterpreter
 
@@ -44,7 +45,7 @@ object ZJS {
           Runtime
             .default
             .unsafe
-            .runToFuture(zio.provide(BackendClientLive.configuredLayer))
+            .fork(zio.provide(BackendClientLive.configuredLayer))
         }
     }
 
@@ -54,6 +55,14 @@ object ZJS {
         ZIO
           .service[BackendClient]
           .flatMap(_.sendRequestZIO(endpoint)(payload))
+          .provide(BackendClientLive.configuredLayer)
+
+    extension [I, E <: Throwable, O](endpoint: Endpoint[String,I,E,O,Any])
+      @targetName("applySecure") // for 'dis-ambiguation' .. with all our generic types, simple overloading did not work...
+      def apply(payload: I): Task[O] =
+        ZIO
+          .service[BackendClient]
+          .flatMap(_.secureSendRequestZIO(endpoint)(payload))
           .provide(BackendClientLive.configuredLayer)
 
 

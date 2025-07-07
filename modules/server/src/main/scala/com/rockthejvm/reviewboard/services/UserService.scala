@@ -13,6 +13,7 @@ import com.rockthejvm.reviewboard.services.EmailService
 import com.rockthejvm.reviewboard.domain.data.UserSession
 import com.rockthejvm.reviewboard.repositories.UserRepository
 import com.rockthejvm.reviewboard.repositories.OTPRepository
+import com.rockthejvm.reviewboard.domain.errors.UnauthorizedException
 
 
 trait UserService {
@@ -59,7 +60,7 @@ class UserServiceLive private(
     for {
       user          <- userRepo
                       .getByEmail(email)
-                      .someOrFail(new RuntimeException(s"no user with email $email"))
+                      .someOrFail(UnauthorizedException(s"no user with email $email"))
       isValidated   <- ZIO.attempt(UserServiceLive.Hash.validate(password, user.hashedPassword))
 
       deletedUser   <- userRepo
@@ -73,12 +74,12 @@ class UserServiceLive private(
     for {
       user          <- userRepo
                       .getByEmail(email)
-                      .someOrFail(new RuntimeException(s"no user with email $email"))
+                      .someOrFail(UnauthorizedException(s"no user with email $email"))
       isValidated   <- ZIO.attempt(UserServiceLive.Hash.validate(oldPassword, user.hashedPassword))
       updatedUser     <- userRepo.update(
                           user.id,
                           user => user.copy(hashedPassword=UserServiceLive.Hash.generate(newPassword))
-                          ).when(isValidated).someOrFail(new RuntimeException("### INVALID PASSWORD ###"))
+                          ).when(isValidated).someOrFail(UnauthorizedException("### INVALID PASSWORD ###"))
     } yield updatedUser
 
   override def verifyPassword(email: String, password: String): Task[Boolean] =

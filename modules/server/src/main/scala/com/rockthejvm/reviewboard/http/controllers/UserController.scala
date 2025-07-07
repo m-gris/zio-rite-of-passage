@@ -13,6 +13,7 @@ import com.rockthejvm.reviewboard.http.responses.UserResponse
 import com.rockthejvm.reviewboard.domain.errors.UnauthorizedException
 
 final case class UserController private (userService: UserService, jwtService: JWTService) extends BaseController with UserEndpoints {
+
   val register: ServerEndpoint[Any, Task] = userRegistrationEndpoint
     .serverLogic { request =>
       userService
@@ -25,7 +26,7 @@ final case class UserController private (userService: UserService, jwtService: J
     .serverLogic {request =>
       userService
         .login(request.email, request.password)
-        .someOrFail(UnauthorizedException)
+        .someOrFail(UnauthorizedException("Invalid email/password combination"))
         .either
       }
 
@@ -59,7 +60,7 @@ final case class UserController private (userService: UserService, jwtService: J
       .serverLogic { req =>
         userService.resetPassword(req.email, req.OTP, req.newPassword) // Task[Boolean]
         .filterOrFail(bool => bool) // just return the boolean
-                     (UnauthorizedException) // or fail with 401 if wrong email, wrong OTP...
+                     (UnauthorizedException("invalid email/token combination")) // or fail with 401 if wrong email, wrong OTP...
                      .unit // we now can discard the boolean if no failure
                      .either
       }

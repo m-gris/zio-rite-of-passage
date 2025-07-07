@@ -20,15 +20,20 @@ object Router {
              DIRECTIVES
              ----------
              In the context of Scala web routing (specifically with the `frontroute` library ),
-             directives are BUILDING BLOCKS THAT COMPOSE THE ROUTING LOGIC.
-             They are similar to pattern matchers
-             and help determine what code should be executed based on the URL path and other HTTP request properties.
+             `directives` are BUILDING BLOCKS THAT COMPOSE THE ROUTING LOGIC.
+             They are similar to pattern matchers and help determine what code
+             should be executed based on the URL path and other HTTP request properties.
            * */
 
           (pathEnd | path("companies"))  {
             // localhost:1234 or  localhost:1234/ or localhost:1234/companies or localhost:1234/companies/
             // all redirect to the main page
             CompaniesPage()
+          },
+
+          path("profile") {
+            // localhost:1234/profile
+            ProfilePage()
           },
 
           path("login") {
@@ -41,8 +46,33 @@ object Router {
             SignUpPage()
           },
 
+          path("logout") {
+            // localhost:1234/logout
+            LogoutPage()
+          },
+
+          path("post") {
+            // localhost:1234/post
+            CreateCompanyPage()
+          },
+
+          path("company" / long) { companyId =>
+            // localhost:1234/company/<id>
+            CompanyPage(companyId)
+          },
+
+          path("forgotpassword") {
+            // localhost:1234/forgotpassword
+            ForgotPasswordPage()
+          },
+
+          path("recoverpassword") {
+            // localhost:1234/recoverpassword
+            RecoverPasswordPage()
+          },
+
           noneMatched {
-            div("404 page not found - Are you lost ?")
+            NotFoundPage()
           }
 
           )
