@@ -82,7 +82,7 @@ db-explore: db-access
 
 # Continuously compile frontend
 frontend-compile:
-    sbt "project app; ~fastOptJS"
+    sbt "project app; ~fastLinkJS"
 
 # Check if npm deps are installed and start frontend dev server
 frontend-serve:
