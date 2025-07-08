@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS otps (
+    id BIGINT NOT NULL,
     email TEXT PRIMARY KEY,
     token TEXT NOT NULL,
     expires BIGINT NOT NULL
