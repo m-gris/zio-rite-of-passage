@@ -88,8 +88,16 @@ class OTPRepositoryLive private (
   override def getOTP(email: String): Task[Option[String]] =
     // check user in db
     userRepo.getByEmail(email).flatMap {
-      case None => ZIO.none
-      case Some(user) => newOTP(user.id, email).option
+      case None => 
+        ZIO.logWarning(s"OTP request for non-existent user: $email") *>
+        ZIO.none
+      case Some(user) => 
+        newOTP(user.id, email)
+          .map(Some(_))
+          .catchAll { error =>
+            ZIO.logError(s"Failed to generate OTP for $email: ${error.getMessage}") *>
+            ZIO.none  // Still return None but log the actual error
+          }
     }
 
   override def checkOTP(email: String, otp: String): Task[Boolean] =

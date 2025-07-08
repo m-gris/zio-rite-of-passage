@@ -105,8 +105,11 @@ class UserServiceLive private(
 
   override def sendOTP(email: String): Task[Unit] =
     otpRepo.getOTP(email).flatMap {
-      case Some(otp) => emailService.sendRecoveryEmail(email, otp)
-      case None      => ZIO.unit
+      case Some(otp) =>
+        ZIO.logInfo(s"OTP generated for $email") *>
+        emailService.sendRecoveryEmail(email, otp)
+      case None =>
+        ZIO.logWarning(s"No OTP generated for $email - user may not exist")
     }
 
   override def resetPassword(email: String, otp: String, newPassword: String): Task[Boolean] =
