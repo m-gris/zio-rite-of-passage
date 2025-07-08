@@ -6,6 +6,7 @@ import io.getquill.jdbczio.Quill
 
 import com.rockthejvm.reviewboard.config.*
 import com.rockthejvm.reviewboard.domain.data.UserSession
+import com.rockthejvm.reviewboard.repositories.UserRepository
 
 
 trait OTPRepository {
@@ -13,6 +14,7 @@ trait OTPRepository {
   def getOTP(email: String): Task[Option[String]]// option because the email might not exist in our db
   def checkOTP(email: String, OTP: String): Task[Boolean]
 }
+
 
 class OTPRepositoryLive private (
   quill: Quill.Postgres[SnakeCase],
