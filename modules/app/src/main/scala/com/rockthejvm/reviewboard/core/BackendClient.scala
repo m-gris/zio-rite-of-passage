@@ -20,6 +20,7 @@ case class RestrictedEndpointException(message: String) extends RuntimeException
 trait BackendClient:
   def companyEndpoints: CompanyEndpoints
   def userEndpoints: UserEndpoints
+  def reviewEndpoints: ReviewEndpoints
   def sendRequestZIO[I,E<:Throwable,O]
         (endpoint: Endpoint[Unit, I, E, O, Any]) // un-secured -> SECURITY_INPUT: Unit
         (payload: I): Task[O]
@@ -40,6 +41,8 @@ class BackendClientLive (
     new CompanyEndpoints {} // no abstract method... no override...
 
   val userEndpoints = new UserEndpoints {}
+
+  val reviewEndpoints = new ReviewEndpoints {}
 
   private val tokenOrFail = ZIO.fromOption(Session.getUserState())
                                .orElseFail(RestrictedEndpointException("You need to log in."))
