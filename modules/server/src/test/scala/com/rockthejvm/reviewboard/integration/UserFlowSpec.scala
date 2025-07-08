@@ -101,7 +101,8 @@ object UserFlowSpec extends ZIOSpecDefault with RepositorySpec {
     override def sendRecoveryEmail(to: String, otp: String): Task[Unit] =
       ZIO.succeed(db += (to -> otp))
 
-    def probe(email: String): Task[Option[String]] = ZIO.succeed(db.get(email))
+    def probe(email: String): Task[Option[String]] =
+      ZIO.succeed(db.get(email))
 
   }
 

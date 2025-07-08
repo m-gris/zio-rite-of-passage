@@ -50,12 +50,12 @@ class OTPRepositoryLive private (
     } yield tokenOpt
 
 
-  private def replaceOTP(email: String): Task[String] =
+  private def replaceOTP(userId: Long, email: String): Task[String] =
     for {
       // gen. otp
       otp <- randomUppercaseString(8)
       expiration = java.lang.System.currentTimeMillis() + otpDuration
-      session = UserSession(email, otp, expiration)
+      session = UserSession(userId, email, otp, expiration)
       // run query
       _   <- run(
                 selectUserWhere(email)
@@ -64,12 +64,12 @@ class OTPRepositoryLive private (
               )
     } yield otp
 
-  private def generateOTP(email: String): Task[String] =
+  private def generateOTP(userId: Long, email: String): Task[String] =
     for {
       // gen. otp
       otp <- randomUppercaseString(8)
       expiration = java.lang.System.currentTimeMillis() + otpDuration
-      session = UserSession(email, otp, expiration)
+      session = UserSession(userId, email, otp, expiration)
       // run query
       _   <- run(
                 query[UserSession]
@@ -79,17 +79,17 @@ class OTPRepositoryLive private (
     } yield otp
 
 
-  private def newOTP(email: String): Task[String] =
+  private def newOTP(userId: Long, email: String): Task[String] =
     findOTP(email).flatMap {
-      case Some(_) => replaceOTP(email)
-      case None    => generateOTP(email)
+      case Some(_) => replaceOTP(userId, email)
+      case None    => generateOTP(userId, email)
     }
 
   override def getOTP(email: String): Task[Option[String]] =
     // check user in db
     userRepo.getByEmail(email).flatMap {
       case None => ZIO.none
-      case Some(_) => newOTP(email).option
+      case Some(user) => newOTP(user.id, email).option
     }
 
   override def checkOTP(email: String, otp: String): Task[Boolean] =

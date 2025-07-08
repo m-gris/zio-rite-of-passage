@@ -57,7 +57,7 @@ object CompanyControllerSpec extends ZIOSpecDefault {
   // We just NEED the dependency
   private val jwtServiceStub = new JWTService {
   override def startSession(user: User): Task[UserSession]  =
-    ZIO.succeed(UserSession(user.email, "SOME_TOKEN", 99999999L))
+    ZIO.succeed(UserSession(user.id, user.email, "SOME_TOKEN", 99999999L))
   override def verifyToken(token: String): Task[Identifiers] =
     ZIO.succeed(Identifiers(123L, "joe@x.com"))
   }

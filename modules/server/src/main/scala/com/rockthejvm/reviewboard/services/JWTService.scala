@@ -45,7 +45,7 @@ class JWTServiceLive(jwtConfig: JWTConfig, clock: java.time.Clock) extends JWTSe
           // once built... the JWT must be SIGNED & HASHED
           .sign(algorithm)
         )
-  } yield UserSession(user.email, jwt, expiration.getEpochSecond())
+  } yield UserSession(user.id, user.email, jwt, expiration.getEpochSecond())
 
   override def verifyToken(token: String): Task[Identifiers] = 
     for {
