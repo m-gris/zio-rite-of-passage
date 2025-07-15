@@ -11,6 +11,10 @@ import com.rockthejvm.reviewboard.domain.data.*
 import com.rockthejvm.reviewboard.core.ZJS.*
 import com.rockthejvm.reviewboard.components.CompanyComponents
 import com.rockthejvm.reviewboard.core.Session
+import com.rockthejvm.reviewboard.components.AddReviewCard
+import com.rockthejvm.reviewboard.components.Time
+import com.rockthejvm.reviewboard.components.Markdown
+import com.raquo.laminar.DomApi
 
 object CompanyPage {
 
@@ -66,14 +70,23 @@ object CompanyPage {
 
   // REACTIVATE VARIABLES
 
+  val addReviewCardActive = Var[Boolean](false)
   val fetchCompanyBus = EventBus[Option[Company]]()   // receives the backend response
+  val triggerRefreshBus = EventBus[Unit]()
+
+  def refreshReviews(companyId: Long) =
+    useBackend(_.reviewEndpoints.getByCompanyIdEndpoint(companyId))
+      .toEventStream
+      .mergeWith(triggerRefreshBus.events.flatMap(_ =>
+        useBackend(_.reviewEndpoints.getByCompanyIdEndpoint(companyId))
+          .toEventStream
+          )
+        )
 
   def reviewsSignal(companyId: Long): Signal[List[Review]] = fetchCompanyBus.events.flatMap {
     case None => EventStream.empty
-    case Some(company) =>
-      val reviewsBus = EventBus[List[Review]]()
-      useBackend(_.reviewEndpoints.getByCompanyIdEndpoint(companyId)).emitTo(reviewsBus)
-      reviewsBus.events
+    case Some(company) => refreshReviews(companyId)
+
   }.scanLeft(List[Review]())((_, list) => list)
 
   // transform events in the bus in to into status
@@ -144,6 +157,16 @@ object CompanyPage {
     div(
       cls := "container-fluid",
       renderCompanySummary, // TODO
+      children <-- addReviewCardActive.signal
+        .map(isActive => Option.when(isActive)(
+          AddReviewCard(
+            company.id,
+            onCancel = () => addReviewCardActive.set(false),
+            triggerBus = triggerRefreshBus,
+            ).apply()
+          )
+        )
+        .map(_.toList),
       children <-- reviewsSignal.map(_.map(renderReview)),
       div(
         cls := "container",
@@ -188,12 +211,18 @@ object CompanyPage {
       case Some(userSession) =>
           div(
             cls := "jvm-companies-details-card-apply-now-btn",
-            child <-- reviews.map(_.find(_.userId ==  userSession.id)), // TODO
-            button(
-              `type` := "button",
-              cls    := "btn btn-warning",
-              "Add a review"
-            )
+            child <-- reviews
+              .map(_.find(_.userId ==  userSession.id)) // Signal[Option[Review]]
+              .map {
+                case None => button(
+                              `type` := "button",
+                              cls    := "btn btn-warning",
+                              "Add a review",
+                              disabled <-- addReviewCardActive.signal,
+                              onClick.mapTo(true) --> addReviewCardActive.writer
+                              )
+                case Some(_) => div("You already posted a review")
+              }
           )
 
     }
@@ -211,11 +240,17 @@ object CompanyPage {
     )
 
   def renderReview(review: Review) =
+
+    def isReviewFromThisUser(user: Option[UserSession]): Boolean =
+      user.map(_.id) == Option(review).map(_.userId)
+
     div(
       cls := "container",
       div(
         cls := "markdown-body overview-section",
         // TODO add a highlight if this is "your" review
+        cls.toggle("review-highlighted") <-- Session.userState.signal
+          .map(isReviewFromThisUser),
         div(
           cls := "company-description",
           div(
@@ -226,12 +261,15 @@ object CompanyPage {
             renderReviewDetail("Salary", review.salary),
             renderReviewDetail("Benefits", review.benefits)
           ),
-          // TODO parse this Markdown
           div(
             cls := "review-content",
-            review.review
+            // Markdown.toHtml(review.review)
+            injectMarkdown(review)
           ),
-          div(cls := "review-posted", "Posted (TODO) a million years ago")
+          div( cls := "review-posted", s"Posted ${Time.unix2humanReadable(review.created.toEpochMilli())}"),
+          child.maybe <-- Session.userState.signal // n.b  child.MAYBE <-- Signal[OPTION]
+            .map(_.filter(_.id == review.userId))
+            .map(_.map(_ => div(cls := "review-posted", "Your review")))
         )
       )
     )
@@ -249,6 +287,18 @@ object CompanyPage {
           )
         )
       )
+    )
+
+
+  def injectMarkdown(review: Review) = div(
+    cls := "review-content",
+      DomApi
+        .unsafeParseHtmlStringIntoNodeArray(Markdown.toHtml(review.review))
+        .map{
+          case node: dom.Text => span(node.data)
+          case node: dom.html.Element => foreignHtmlElement(node)
+          case _ => emptyNode
+        }
     )
 
 
