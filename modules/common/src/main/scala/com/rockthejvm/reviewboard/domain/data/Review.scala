@@ -27,5 +27,14 @@ object Review {
   // this given instance will be passed automatically whenever we need to
   //  - return a Review as an HTTP Payload
   //  - or take a Review as input (as an HTTP Payload)
+  def empty(companyId: Long) = Review(
+    -1L,
+    companyId,
+    -1L,
+    5,5,5,5,5,
+    "",
+    Instant.now(),
+    Instant.now()
+    )
 }
 

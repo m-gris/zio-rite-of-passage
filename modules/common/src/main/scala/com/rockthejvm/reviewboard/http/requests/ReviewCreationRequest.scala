@@ -35,4 +35,13 @@ final case class ReviewCreationRequest(
 
 object ReviewCreationRequest {
   given codec: JsonCodec[ReviewCreationRequest] = DeriveJsonCodec.gen[ReviewCreationRequest]
+  def fromReview(review: Review) = ReviewCreationRequest(
+  companyId=review.companyId,
+  management=review.management,
+  culture=review.culture,
+  salary=review.salary,
+  benefits=review.benefits,
+  wouldRecommend=review.wouldRecommend,
+  review=review.review,
+  )
 }
