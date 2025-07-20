@@ -53,3 +53,23 @@ CREATE TABLE IF NOT EXISTS invites (
     active BOOLEAN NOT NULL DEFAULT false
 );
 
+-- dummy data
+insert into companies (
+    id,
+    name,
+    slug,
+    url,
+    location,
+    country,
+    industry
+    ) values (
+    1,
+    'rockthejvm',
+    'rockthejvm',
+    'https://rockthejvm.com',
+    'Bucharest',
+    'Romania',
+    'Teaching'
+    );
+
+insert into invites (id, user_name, company_id, n_invites, active) values (1, 'daniel@rockthejvm.com', 1, 10, true);
