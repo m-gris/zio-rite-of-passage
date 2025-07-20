@@ -44,3 +44,12 @@ CREATE TABLE IF NOT EXISTS otps (
     token TEXT NOT NULL,
     expires BIGINT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS invites (
+    id BIGSERIAL PRIMARY KEY,
+    user_name TEXT NOT NULL,
+    company_id BIGINT NOT NULL,
+    n_invites INT NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT false
+);
+

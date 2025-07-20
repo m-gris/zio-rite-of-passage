@@ -13,33 +13,29 @@ import com.rockthejvm.reviewboard.repositories.*
 import com.rockthejvm.reviewboard.http.controllers.*
 import sttp.tapir.server.interceptor.cors.CORSInterceptor
 
-
-
 object Application extends ZIOAppDefault {
 
   val serverProgram = for {
 
-    endpoints  <- HttpAPI.endpointsZIO
+    endpoints <- HttpAPI.endpointsZIO
 
-    httpApp    = ZioHttpInterpreter(
-                  ZioHttpServerOptions
-                    .default
-                    // Add CORS support to allow frontend (localhost:1234)
-                    // to access this API
-                    .appendInterceptor(CORSInterceptor.default)
-                    // Without this:
-                    // "Access blocked by CORS policy:
-                    // No 'Access-Control-Allow-Origin' header"
-                ).toHttp(endpoints)
+    httpApp = ZioHttpInterpreter(
+      ZioHttpServerOptions.default
+        // Add CORS support to allow frontend (localhost:1234)
+        // to access this API
+        .appendInterceptor(CORSInterceptor.default)
+        // Without this:
+        // "Access blocked by CORS policy:
+        // No 'Access-Control-Allow-Origin' header"
+    ).toHttp(endpoints)
 
-    _          <- Server.serve(httpApp) // provided / injected below...
+    _ <- Server.serve(httpApp) // provided / injected below...
 
-    _          <- Console.printLine("\n\n@@@@ Success - Server Started @@@\n\n")
+    _ <- Console.printLine("\n\n@@@@ Success - Server Started @@@\n\n")
 
   } yield ()
 
   override def run = serverProgram.provide(
-
     Server.default,
 
     // SERVICES
@@ -48,6 +44,7 @@ object Application extends ZIOAppDefault {
     CompanyServiceLive.layer,
     JWTServiceLive.configuredLayer,
     EmailServiceLive.configuredLayer,
+    InviteServiceLive.layer,
 
     // REPOS
     Repository.dataLayer,
@@ -55,6 +52,7 @@ object Application extends ZIOAppDefault {
     ReviewRepositoryLive.layer,
     CompanyRepositoryLive.layer,
     OTPRepositoryLive.configuredLayer,
+    InviteRepositoryLive.layer
   )
 
 }
