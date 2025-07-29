@@ -72,4 +72,6 @@ insert into companies (
     'Teaching'
     );
 
+insert into users (id, email, hashed_password) values (1, 'marc@flatmappers.com', '123');
+
 insert into invites (id, user_name, company_id, n_invites, active) values (1, 'daniel@rockthejvm.com', 1, 10, true);
