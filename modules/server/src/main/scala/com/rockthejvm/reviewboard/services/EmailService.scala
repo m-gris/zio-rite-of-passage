@@ -10,6 +10,7 @@ import javax.mail.Message
 import javax.mail.Transport
 
 import com.rockthejvm.reviewboard.config.*
+import com.rockthejvm.reviewboard.domain.data.Company
 
 trait EmailService {
   def sendEmail(to: String, subject: String, content: String): Task[Unit]
@@ -30,15 +31,36 @@ trait EmailService {
     """
     sendEmail(to, subject, content)
 
+  def sendInvite(from: String, to: String, company: Company): Task[Unit] =
+    val subject = s"Rock the JVM: Invitation to Review ${company.name}"
+    val content = s"""
+          <div style="
+              border: 1px solid black;
+              padding: 20px;
+              font-family: sans-serif;
+              line-height: 2;
+              font-size: 20px;
+          ">
+            <h1>You are invited to review ${company.name}</h1>
+            <p>
+              Go to
+              <a href="http://localhost:1234/companies/${company.id}">this link </a>
+              to add your thoughts on this company.
+              <br/>
+              Should take just a minute.
+            </p>
+            <p>😘 from RTJVM</p>
+          </div>
+        """
+    sendEmail(to, subject, content)
 }
 
 class EmailServiceLive private (emailConfig: EmailConfig) extends EmailService {
 
   private val host: String = emailConfig.host
-  private val port: Int = emailConfig.port
+  private val port: Int    = emailConfig.port
   private val user: String = emailConfig.user
-  private val pwd: String = emailConfig.pwd
-
+  private val pwd: String  = emailConfig.pwd
 
   override def sendEmail(to: String, subject: String, content: String): Task[Unit] =
     val message = for {
@@ -48,7 +70,6 @@ class EmailServiceLive private (emailConfig: EmailConfig) extends EmailService {
       _       <- Console.printLine("Recovery Email Sent!")
     } yield message
     message.map(Transport.send)
-
 
   private val propsResource: Task[Properties] = {
 
@@ -73,21 +94,19 @@ class EmailServiceLive private (emailConfig: EmailConfig) extends EmailService {
   }
 
   private def createMessage(
-    session: Session,
-    from: String,
-    to: String,
-    subject: String,
-    content: String
+      session: Session,
+      from: String,
+      to: String,
+      subject: String,
+      content: String
   ): Task[MimeMessage] =
 
-    val message =new MimeMessage(session)
+    val message = new MimeMessage(session)
     message.setFrom(from)
     message.setRecipients(Message.RecipientType.TO, to)
     message.setSubject(subject)
     message.setContent(content, "text/html; charset=utf-8")
     ZIO.succeed(message)
-
-
 
 }
 
@@ -101,16 +120,15 @@ object EmailServiceLive {
     Configs.makeLayer[EmailConfig]("rockthejvm.email") >>> layer
 }
 
-
 object EmailServiceDemo extends ZIOAppDefault {
 
   val program = for {
     emailService <- ZIO.service[EmailService]
-    _            <- emailService.sendRecoveryEmail(
-                                  to="amnesic@gmail.com",
-                                  otp="ABC1234",
-                                  )
-    _            <- Console.printLine("Email Sent!")
+    _ <- emailService.sendRecoveryEmail(
+      to = "amnesic@gmail.com",
+      otp = "ABC1234"
+    )
+    _ <- Console.printLine("Email Sent!")
   } yield ()
 
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Any] =
