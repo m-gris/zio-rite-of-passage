@@ -193,11 +193,15 @@ object UserServiceLive {
 
     def validate(password: String, hashedPassword: String) =
       val hashSegments = hashedPassword.split(SEP)
-      val nIterations = hashSegments(0).toInt
-      val salt = fromHex(hashSegments(1))
-      val hash = fromHex(hashSegments(2))
-      val testHash = pbkdf2(password.toCharArray(), salt, nIterations, SALT_BYTE_SIZE)
-      areEqual(testHash, hash)
+      if (hashSegments.length != 3) {
+        false
+      } else {
+        val nIterations = hashSegments(0).toInt
+        val salt = fromHex(hashSegments(1))
+        val hash = fromHex(hashSegments(2))
+        val testHash = pbkdf2(password.toCharArray(), salt, nIterations, SALT_BYTE_SIZE)
+        areEqual(testHash, hash)
+      }
     }
 }
 
