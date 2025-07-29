@@ -11,6 +11,7 @@ trait InviteRepository {
   def getInvitePack(userName: String, companyId: Long): Task[Option[InviteRecord]]
   def addInvitePack(userName: String, companyId: Long, nInvites: Int): Task[Long]
   def activatePack(id: Long): Task[Boolean]
+  def markInvites(userName: String, companyId: Long, nInvites: Int): Task[Int]
 }
 
 class InviteRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends InviteRepository {
@@ -77,6 +78,25 @@ class InviteRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends In
           .returning(_ => true)
       )
     } yield result
+
+  override def markInvites(userName: String, companyId: Long, nInvites: Int): Task[Int] =
+    for {
+      currentRecord <- getInvitePack(userName, companyId)
+        .someOrFail(
+          new RuntimeException(
+            s"User $userName cannot send invite for company $companyId"
+          )
+        )
+      nInvitesMarked <- ZIO.succeed(Math.min(nInvites, currentRecord.nInvites))
+      _ <- run(
+        query[InviteRecord]
+          .filter(_.id == lift(currentRecord.id))
+          .updateValue(lift(currentRecord.copy(nInvites = currentRecord.nInvites - nInvitesMarked)))
+          .returning(r => r)
+      )
+
+    } yield nInvitesMarked
+
 }
 
 object InviteRepositoryLive {
