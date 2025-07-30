@@ -67,9 +67,11 @@ class InviteRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends In
     )
 
   override def activatePack(id: Long): Task[Boolean] =
-    for {
+    ZIO.logInfo(s"InviteRepository: Attempting to activate pack ID $id") *>
+    (for {
       current <- run(query[InviteRecord].filter(_.id == lift(id)))
         .map(_.headOption)
+        .tap(maybeInvite => ZIO.logInfo(s"InviteRepository: Found record: $maybeInvite"))
         .someOrFail(new RuntimeException(s"Unable to activate packId $id"))
       result <- run(
         query[InviteRecord]
@@ -77,7 +79,8 @@ class InviteRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends In
           .updateValue(lift(current.copy(active = true)))
           .returning(_ => true)
       )
-    } yield result
+        .tap(_ => ZIO.logInfo(s"InviteRepository: Updated pack $id to active"))
+    } yield result)
 
   override def markInvites(userName: String, companyId: Long, nInvites: Int): Task[Int] =
     for {

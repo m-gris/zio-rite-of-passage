@@ -12,7 +12,6 @@ import org.testcontainers.shaded.org.bouncycastle.crypto.tls.SessionParameters
 import com.stripe.net.Webhook
 import java.util.Optional
 import com.stripe.model.StripeObject
-import com.stripe.model.Review.Session
 
 trait PaymentService {
 
@@ -31,6 +30,7 @@ trait PaymentService {
 class PaymentServiceLive(config: PaymentConfig) extends PaymentService {
 
   override def createCheckoutSession(packId: Long, userName: String): Task[Option[StripeSession]] =
+    ZIO.logWarning(s"Creating checkout session for packId: $packId, user: $userName") *>
     ZIO
       .attempt {
 
@@ -66,9 +66,8 @@ class PaymentServiceLive(config: PaymentConfig) extends PaymentService {
           .build()
       }
       .map(params => StripeSession.create(params))
+      .tap(session => ZIO.logWarning(s"Created Stripe session with ID: ${session.getId}, clientReferenceId: ${session.getClientReferenceId}"))
       .map(Option(_))
-      .logError("Payment Session Creation FAILED")
-      .catchSome { case _ => ZIO.none }
 
   override def handleWebhookEvent[A](
       signature: String,
@@ -77,21 +76,26 @@ class PaymentServiceLive(config: PaymentConfig) extends PaymentService {
     ): Task[Option[A]] = ZIO.attempt {
       //build webhook event
       Webhook.constructEvent(payload, signature, config.secret)
-    }.flatMap {
+    }.flatMap { event =>
       // check event type
-      event => event.getType() match {
-        case "checkout.session.completed" => ZIO.foreach {
-          // parse the event
-          event.getDataObjectDeserializer()
-            .getObject() // Optional[StripeObject]
-            .toScala // NOTA: Optional is 'java specific'
-            .map( _.asInstanceOf[StripeSession]) // downcasting to StripeSession
-            .map(_.getClientReferenceId)
-          } (action) // activate the pack
+      ZIO.logInfo(s"### *** ### event: $event ### *** ###")
+      event.getType() match {
+        case "checkout.session.completed" =>
+          ZIO.attempt {
+            val deserializer = event.getDataObjectDeserializer()
+            val session = deserializer.deserializeUnsafe().asInstanceOf[StripeSession]
+            Option(session.getClientReferenceId)
+          }.flatMap {
+            case Some(refId) =>
+              action(refId).map(Some(_))
+            case None =>
+              ZIO.fail(new RuntimeException("No client reference ID found in checkout session"))
+          }
         case _ => ZIO.none
-        }
       }
     }
+
+}
 
 
 object PaymentServiceLive {
