@@ -12,6 +12,12 @@ import com.rockthejvm.reviewboard.http.HttpAPI
 import com.rockthejvm.reviewboard.repositories.*
 import com.rockthejvm.reviewboard.http.controllers.*
 import sttp.tapir.server.interceptor.cors.CORSInterceptor
+// Logging imports for debugging CORS
+import sttp.tapir.server.interceptor.log.DefaultServerLog
+import sttp.tapir.server.interceptor.RequestInterceptor
+import sttp.tapir.server.interceptor.EndpointInterceptor
+import sttp.model.Header
+// End logging imports
 
 object Application extends ZIOAppDefault {
 

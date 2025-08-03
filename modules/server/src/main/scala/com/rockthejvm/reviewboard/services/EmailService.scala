@@ -44,7 +44,7 @@ trait EmailService {
             <h1>You are invited to review ${company.name}</h1>
             <p>
               Go to
-              <a href="http://localhost:1234/companies/${company.id}">this link </a>
+              <a href="http://localhost:1234/company/${company.id}">this link </a>
               to add your thoughts on this company.
               <br/>
               Should take just a minute.
@@ -67,7 +67,6 @@ class EmailServiceLive private (emailConfig: EmailConfig) extends EmailService {
       props   <- propsResource
       session <- createSession(props)
       message <- createMessage(session, user, to, subject, content)
-      _       <- Console.printLine("Recovery Email Sent!")
     } yield message
     message.map(Transport.send)
 

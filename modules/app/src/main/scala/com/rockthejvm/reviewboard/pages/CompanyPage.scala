@@ -15,6 +15,8 @@ import com.rockthejvm.reviewboard.components.AddReviewCard
 import com.rockthejvm.reviewboard.components.Time
 import com.rockthejvm.reviewboard.components.Markdown
 import com.raquo.laminar.DomApi
+import com.rockthejvm.reviewboard.components.Router
+import com.rockthejvm.reviewboard.http.requests.InvitePackRequest
 
 object CompanyPage {
 
@@ -73,6 +75,8 @@ object CompanyPage {
   val addReviewCardActive = Var[Boolean](false)
   val fetchCompanyBus = EventBus[Option[Company]]()   // receives the backend response
   val triggerRefreshBus = EventBus[Unit]()
+  val inviteErrorBus = EventBus[String]()
+
 
   def refreshReviews(companyId: Long) =
     useBackend(_.reviewEndpoints.getByCompanyIdEndpoint(companyId))
@@ -98,6 +102,13 @@ object CompanyPage {
       case Some(company) => Status.OK(company)
       case None          => Status.NOT_FOUND
   }
+
+  def startPaymentFlow(companyId: Long) =
+    val checkoutUrl = useBackend(_.inviteEndpoints.addPackPromotedEndpoint(InvitePackRequest(companyId)))
+    checkoutUrl
+      .tapError(e => ZIO.succeed(inviteErrorBus.emit(e.getMessage)))
+      .emitTo(Router.externalUrlBus) // will cause a redirect (i.e forcing the browser to open the checkout url)
+
 
   // "RENDERERS"
 
@@ -168,7 +179,16 @@ object CompanyPage {
         )
         .map(_.toList),
       children <-- reviewsSignal.map(_.map(renderReview)),
-      div(
+
+    // renderInviteAction for that company, only IF THE USER IS LOGGED IN
+    child.maybe <-- Session.userState.signal.map(_.map(_ => renderInviteAction(company)))
+
+    )
+
+  )
+
+  def renderInviteAction(company: Company) =
+    div(
         cls := "container",
         div(
           cls := "rok-last",
@@ -184,19 +204,19 @@ object CompanyPage {
             ),
             div(
               cls := "col-md-6 col-sm-6 col-6",
-              a(
-                href   := company.url,
-                target := "blank",
-                button(`type` := "button", cls := "rock-action-btn", "Invite people")
-                // TODO: add new people
+              button(
+                `type` := "button",
+                cls := "rock-action-btn",
+                "Invite people",
+                // register an action when button clicked (i.e force the browser to open the url)
+                disabled <-- inviteErrorBus.events.mapTo(true).startWith(false),
+                onClick.mapToUnit --> (_ => startPaymentFlow(company.id))
+                ),
+               div( child.text <-- inviteErrorBus.events )
               )
             )
-          )
+          ),
         )
-      )
-    )
-
-  )
 
   def maybeRenderUserAction(maybeUserSession: Option[UserSession], reviews: Signal[List[Review]]) =
 

@@ -8,9 +8,18 @@ import com.rockthejvm.reviewboard.pages.*
 
 object Router {
 
+  val externalUrlBus = EventBus[String]() // to redirect the entire UI to external pages (ex: Stripe for checkout)
+
+  def redirect(url: String): Unit = { dom.window.location.href = url }
+
   def apply() =
 
     mainTag(
+
+      onMountCallback(ctx =>
+          externalUrlBus.events.foreach(redirect)(ctx.owner)
+          ),
+
       routes(
         div(
 
@@ -31,43 +40,39 @@ object Router {
             CompaniesPage()
           },
 
+          path("changepassword") {
+            ChangePasswordPage()
+          },
+
           path("profile") {
-            // localhost:1234/profile
             ProfilePage()
           },
 
           path("login") {
-            // localhost:1234/login
             LoginPage()
           },
 
           path("signup") {
-            // localhost:1234/signup
             SignUpPage()
           },
 
           path("logout") {
-            // localhost:1234/logout
             LogoutPage()
           },
 
           path("post") {
-            // localhost:1234/post
             CreateCompanyPage()
           },
 
           path("company" / long) { companyId =>
-            // localhost:1234/company/<id>
             CompanyPage(companyId)
           },
 
           path("forgotpassword") {
-            // localhost:1234/forgotpassword
             ForgotPasswordPage()
           },
 
           path("recoverpassword") {
-            // localhost:1234/recoverpassword
             RecoverPasswordPage()
           },
 

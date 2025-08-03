@@ -21,6 +21,7 @@ trait BackendClient:
   def companyEndpoints: CompanyEndpoints
   def userEndpoints: UserEndpoints
   def reviewEndpoints: ReviewEndpoints
+  def inviteEndpoints: InviteEndpoints
   def sendRequestZIO[I,E<:Throwable,O]
         (endpoint: Endpoint[Unit, I, E, O, Any]) // un-secured -> SECURITY_INPUT: Unit
         (payload: I): Task[O]
@@ -35,14 +36,17 @@ class BackendClientLive (
   config: BackendClientConfig
   ) extends BackendClient {
 
-  val companyEndpoints =
-    // reminder: this create an ANONYMOUS CLASS
-    // that implements the `CompanyEndpoints` trait
+  // NOTE:
+  // Scala syntax reminder:
+  // `new TraitName {}` creates an anonymous class that implements the trait
+  // The {} is the body of the anonymous class where you'd normally put overrides
+  // When the trait has all methods already implemented, the body can remain empty
+  // This pattern is commonly used to get an instance of a trait without creating a named class
+  val companyEndpoints = // reminder: this create an ANONYMOUS CLASS that implements the `CompanyEndpoints` trait
     new CompanyEndpoints {} // no abstract method... no override...
-
   val userEndpoints = new UserEndpoints {}
-
   val reviewEndpoints = new ReviewEndpoints {}
+  val inviteEndpoints = new InviteEndpoints {}
 
   private val tokenOrFail = ZIO.fromOption(Session.getUserState())
                                .orElseFail(RestrictedEndpointException("You need to log in."))
@@ -75,7 +79,7 @@ class BackendClientLive (
         (payload: I): Task[O] = {
           for {
 
-            token <- tokenOrFail
+            token    <- tokenOrFail
             response <- backend.send(prepareSecureRequest(endpoint)(token)(payload))
                     .map(response => response.body)
                     // submerge failures with ZIO.absolve (the opposite of either)

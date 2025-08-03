@@ -37,9 +37,8 @@ object Session {
       .foreach(_ => Storage.remove(stateName))
 
     // retrieve the 'known-to-be-still-valid' session
-    userState.set(
-      Storage.get[UserSession](stateName)
-      )
+    val currentSession = Storage.get[UserSession](stateName)
+    if userState.now() != currentSession then userState.set(currentSession)
 
   }
 
