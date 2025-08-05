@@ -1,6 +1,7 @@
 package com.rockthejvm.reviewboard.services
 
 import zio.*
+import scala.concurrent.duration.*
 
 import com.rockthejvm.reviewboard.domain.data.*
 import com.rockthejvm.reviewboard.repositories.*
@@ -15,7 +16,7 @@ trait InviteService {
       userName: String,
       companyId: Long,
       receivers: List[String]
-  ): Task[Int /* n invites */ ]
+  ): Task[Int] // Returns number of invites marked
 
   def addInvitePack(userName: String, companyId: Long): Task[Long /* the packId */ ]
 
@@ -37,7 +38,7 @@ class InviteServiceLive private (
       userName: String,
       companyId: Long,
       receivers: List[String]
-  ): Task[Int /* n invites */ ] =
+  ): Task[Int] =
     for {
       company <- companyRepository
         .getById(companyId)
@@ -45,10 +46,18 @@ class InviteServiceLive private (
           new RuntimeException(s"Cannot send invites. Company $companyId does not exist")
         )
       nInvitesMarked <- inviteRepository.markInvites(userName, companyId, receivers.size)
+      // Send all emails - fail the entire operation if any email fails
       _ <- ZIO.collectAllPar(
         receivers
           .take(nInvitesMarked)
-          map (receiver => emailService.sendInvite(userName, receiver, company))
+          .map { receiver =>
+            emailService
+              .sendInvite(userName, receiver, company)
+              .timeoutFail(new RuntimeException(s"Email service timed out"))(10.seconds)
+              .tapError(error => 
+                ZIO.logError(s"Failed to send invite email to $receiver: ${error.getMessage}")
+              )
+          }
       )
     } yield nInvitesMarked
 

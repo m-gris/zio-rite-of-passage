@@ -68,7 +68,7 @@ class EmailServiceLive private (emailConfig: EmailConfig) extends EmailService {
       session <- createSession(props)
       message <- createMessage(session, user, to, subject, content)
     } yield message
-    message.map(Transport.send)
+    message.flatMap(msg => ZIO.attempt(Transport.send(msg)))
 
   private val propsResource: Task[Properties] = {
 
