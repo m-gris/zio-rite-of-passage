@@ -37,9 +37,7 @@ class InviteController private (
         inviteService
           .sendInvites(identifiers.email, request.companyId, request.emails)
           .map { nInvitesSent =>
-            if nInvitesSent == request.emails.size
-            then InviteResponse("OK", nInvitesSent)
-            else InviteResponse("Partial Success", nInvitesSent)
+            InviteResponse("OK", nInvitesSent)
           }
           .either
       }

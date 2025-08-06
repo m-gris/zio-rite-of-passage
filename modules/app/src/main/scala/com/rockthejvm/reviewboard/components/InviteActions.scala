@@ -12,6 +12,7 @@ import com.rockthejvm.reviewboard.http.requests.InviteRequest
 object InviteActions {
 
   val invitationsBus = EventBus[List[Invitations]]()
+  private val errorStore = Var[Option[String]](None)
 
   def refreshInviteList() =
     useBackend(_.inviteEndpoints.getByUserNameEndpoint(()) )
@@ -27,21 +28,31 @@ object InviteActions {
   def renderInviteSection(invitations: Invitations) = {
 
     val emails = Var[Array[String]](Array())
-    val maybeError = Var[Option[String]](None)
 
     def isInvalid(email: String) = !email.matches(emailRegex)
 
     val inviteSubmiter = Observer[Unit] { _ =>
       val currentEmails = emails.now().toList
       if currentEmails.exists(isInvalid)
-        then maybeError.set(Some("At least an email is invalid"))
+        then errorStore.set(Some("At least an email is invalid"))
       else
         val refreshProgram = for {
-          _ <- useBackend(_.inviteEndpoints.inviteEndpoint(InviteRequest(invitations.companyId, currentEmails)))
+          response <- useBackend(_.inviteEndpoints.inviteEndpoint(InviteRequest(invitations.companyId, currentEmails)))
+          _ <- ZIO.succeed {
+            // Success - clear error and textarea
+            errorStore.set(None)
+            emails.set(Array())
+          }
           invitesLeft <- refreshInviteList()
         } yield invitesLeft
-        maybeError.set(None)
-        refreshProgram.emitTo(invitationsBus)
+        
+        refreshProgram
+          .catchAll { error =>
+            errorStore.set(Some(s"Failed to send invites: ${error.getMessage}"))
+            // Still need to refresh the list to show updated invite count
+            refreshInviteList()
+          }
+          .emitTo(invitationsBus)
     }
 
 
@@ -67,7 +78,7 @@ object InviteActions {
         "Invite",
         onClick.mapToUnit --> inviteSubmiter
         ),
-      child.maybe <-- maybeError.signal.map(renderError)
+      child.maybe <-- errorStore.signal.map(renderError)
       )
 
 
