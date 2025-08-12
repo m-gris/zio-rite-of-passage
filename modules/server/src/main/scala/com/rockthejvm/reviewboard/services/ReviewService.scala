@@ -31,7 +31,7 @@ class ReviewServiceLive private(/*
   This is useful for controlling object creation,
   such as in singleton patterns or factory methods.*/
   repo: ReviewRepository,
-  summarize: SummarizationService,
+  summarize: LLMService,
   config: SummaryConfig,
   ) extends ReviewService {
 
@@ -109,7 +109,7 @@ object ReviewServiceLive {
   val layer = ZLayer {
     for {
       repo      <- ZIO.service[ReviewRepository]
-      summarize <- ZIO.service[SummarizationService]
+      summarize <- ZIO.service[LLMService]
       config    <- ZIO.service[SummaryConfig]
     } yield new ReviewServiceLive(repo, summarize, config)
   }

@@ -13,19 +13,19 @@ import com.rockthejvm.reviewboard.config.*
 import com.rockthejvm.reviewboard.domain.errors.HttpError
 import com.rockthejvm.reviewboard.http.requests.LLMCallRequest
 import com.rockthejvm.reviewboard.http.responses.LLMCallResponse
-import com.rockthejvm.reviewboard.config.SummarizationConfig
-import com.rockthejvm.reviewboard.http.endpoints.SummarizationEndpoints
+import com.rockthejvm.reviewboard.config.LLMConfig
+import com.rockthejvm.reviewboard.http.endpoints.LLMEndpoints
 
 
-trait SummarizationService {
+trait LLMService {
   def llmCall(prompt: String): Task[Option[String]]
 }
 
-class SummarizationServiceLive private(
+class LLMServiceLive private(
   backend: SttpBackend[Task, ZioStreams],
   interpreter: SttpClientInterpreter,
-  config: SummarizationConfig
-  ) extends SummarizationService with SummarizationEndpoints {
+  config: LLMConfig
+  ) extends LLMService with LLMEndpoints {
 
   private def prepareSecureRequest[S,I,E,O](endpoint: Endpoint[S,I,E,O,Any]):
   //token -> payload -> request
@@ -50,27 +50,27 @@ class SummarizationServiceLive private(
 
 }
 
-object SummarizationServiceLive {
+object LLMServiceLive {
   val layer = ZLayer {
     for {
       backend     <- ZIO.service[SttpBackend[Task, ZioStreams]]
       interpreter <- ZIO.service[SttpClientInterpreter]
-      config      <- ZIO.service[SummarizationConfig]
-      service     <- ZIO.succeed(new SummarizationServiceLive(backend, interpreter, config))
+      config      <- ZIO.service[LLMConfig]
+      service     <- ZIO.succeed(new LLMServiceLive(backend, interpreter, config))
     } yield service
   }
 
   val configuredLayer =
     HttpClientZioBackend.layer()
       >+> ZLayer.succeed(SttpClientInterpreter())
-      >+> Configs.makeLayer[SummarizationConfig]("rockthejvm.summarization")
+      >+> Configs.makeLayer[LLMConfig]("rockthejvm.llm")
       >>> layer
 }
 
-object SummarizationServiceDemo extends ZIOAppDefault {
+object LLMServiceDemo extends ZIOAppDefault {
   override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Any] =
-    ZIO.service[SummarizationService]
+    ZIO.service[LLMService]
       .flatMap(_.llmCall("Please write a non-trivial joke about monads"))
       .flatMap(resp => Console.printLine(resp.toString))
-      .provide(SummarizationServiceLive.configuredLayer)
+      .provide(LLMServiceLive.configuredLayer)
 }

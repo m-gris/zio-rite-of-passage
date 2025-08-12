@@ -52,7 +52,7 @@ object Application extends ZIOAppDefault {
     InviteServiceLive.configuredLayer,
     ReviewServiceLive.configuredLayer,
     PaymentServiceLive.configuredLayer,
-    SummarizationServiceLive.configuredLayer,
+    LLMServiceLive.configuredLayer,
 
 
     // REPOS

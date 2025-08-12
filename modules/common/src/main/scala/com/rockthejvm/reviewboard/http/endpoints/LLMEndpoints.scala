@@ -11,7 +11,7 @@ import com.rockthejvm.reviewboard.domain.errors.HttpError
 import com.rockthejvm.reviewboard.http.requests.LLMCallRequest
 import com.rockthejvm.reviewboard.http.responses.LLMCallResponse
 
-trait SummarizationEndpoints extends BaseEndpoint {
+trait LLMEndpoints extends BaseEndpoint {
 
   val llmCallEndpoint =
       securedBaseEndpoint
