@@ -27,11 +27,17 @@ class ReviewController private (reviewService: ReviewService, jwtService: JWTSer
       )
 
   val getByCompanyId: ServerEndpoint[Any, Task] =
-    getByCompanyIdEndpoint.serverLogicSuccess( companyId => reviewService.getByCompanyId(companyId ) )
+    getByCompanyIdEndpoint.serverLogicSuccess( companyId => reviewService.getByCompanyId(companyId ))
+
+  val getSummary: ServerEndpoint[Any, Task] =
+    getSummaryEndpoint.serverLogicSuccess( companyId => reviewService.getSummary(companyId))
+
+  val makeSummary: ServerEndpoint[Any, Task] =
+    makeSummaryEndpoint.serverLogicSuccess( companyId => reviewService.makeSummary(companyId))
 
 
   override val routes: List[ServerEndpoint[Any, Task]] =
-    List(create, getById, getByCompanyId)
+    List(getSummary, makeSummary, create, getById, getByCompanyId)
 
 }
 

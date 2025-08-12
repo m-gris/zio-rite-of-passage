@@ -38,4 +38,25 @@ trait ReviewEndpoints extends BaseEndpoint {
       .get
       .out(jsonBody[List[Review]])
 
+  val getSummaryEndpoint =
+    baseEndpoint
+      .tag("reviews")
+      .name("getSummary")
+      .description("Get a summary of all the reviews for a given company")
+      /*WARNING: will have to be before getByCompany in the router's list
+       * to avoid 'path collision'
+       * */
+      .in("reviews" / "company" / path[Long]("id") / "summary")
+      .get
+      .out(jsonBody[Option[ReviewSummary]])
+
+  val makeSummaryEndpoint =
+    baseEndpoint
+      .tag("reviews")
+      .name("makeSummary")
+      .description("Summarizes the reviews for a given company")
+      .in("reviews" / "company" / path[Long]("id") / "summary")
+      .post
+      .out(jsonBody[Option[ReviewSummary]])
+
 }

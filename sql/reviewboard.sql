@@ -29,6 +29,11 @@ CREATE TABLE IF NOT EXISTS reviews (
     updated TIMESTAMP NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS review_summaries (
+    company_id BIGINT NOT NULL PRIMARY KEY,
+    content TEXT,
+    created TIMESTAMP NOT NULL DEFAULT now()
+);
 
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,

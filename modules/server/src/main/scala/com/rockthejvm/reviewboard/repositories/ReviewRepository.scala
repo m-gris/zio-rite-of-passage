@@ -5,6 +5,7 @@ import io.getquill.*
 import io.getquill.jdbczio.Quill
 
 import com.rockthejvm.reviewboard.domain.data.*
+import java.time.Instant
 
 trait ReviewRepository {
   // READING Ops
@@ -16,6 +17,9 @@ trait ReviewRepository {
   def update(id: Long, op: Review => Review): Task[Review]
   def delete(id: Long): Task[Review]
 
+  def getSummary(companyId: Long): Task[Option[ReviewSummary]]
+  def insertSummary(companyId: Long, summary: String): Task[ReviewSummary]
+
 }
 
 class ReviewRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends ReviewRepository {
@@ -23,13 +27,15 @@ class ReviewRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends Re
   import quill.*
 
   // the "mapping rules"
-  inline given reviewSchema: SchemaMeta[Review]   = schemaMeta[Review]("reviews")
+  inline given reviewSchema: SchemaMeta[Review] =
+    schemaMeta[Review]("reviews")
   // the "insertion rules"
   inline given reviewInsertSchema: InsertMeta[Review] =
     insertMeta[Review](/*excluding*/_.id, _.created, _.updated)
   // the "update rules"
   inline given reviewUpdateSchema: UpdateMeta[Review] =
     updateMeta[Review](/*excluding*/_.id, _.companyId, _.userId, _.created)
+
 
   def create(review: Review): Task[Review] =
     run(query[Review].insertValue(lift(review)).returning(r => r))
@@ -63,6 +69,41 @@ class ReviewRepositoryLive private (quill: Quill.Postgres[SnakeCase]) extends Re
         .delete
         .returning(r => r)
       )
+
+  // for the review_summaries Table
+  inline given reviewSummarySchema: SchemaMeta[ReviewSummary] =
+    schemaMeta[ReviewSummary]("review_summaries")
+  inline given reviewSummaryInsertSchema: InsertMeta[ReviewSummary] =
+    insertMeta[ReviewSummary]()
+  inline given reviewSummaryUpdateSchema: UpdateMeta[ReviewSummary] =
+    updateMeta[ReviewSummary]()
+
+  def getSummary(companyId: Long): Task[Option[ReviewSummary]] =
+    run(
+      query[ReviewSummary]
+        .filter(_.companyId == lift(companyId))
+      ) // List[ReviewSummary]
+      .map(_.headOption) // Option[ReviewSummary]
+
+  def insertSummary(companyId: Long, summary: String): Task[ReviewSummary] =
+
+    val reviewSummary = ReviewSummary(companyId, summary, Instant.now())
+
+    getSummary(companyId).flatMap {
+
+      case None => run(
+        query[ReviewSummary]
+          .insertValue(lift(reviewSummary))
+          .returning(r => r)
+
+        )
+      case Some(_) => run(
+        query[ReviewSummary]
+          .filter(_.companyId == lift(companyId))
+          .updateValue(lift(reviewSummary))
+          .returning(r => r))
+    }
+
 }
 
 object ReviewRepositoryLive {
@@ -70,4 +111,23 @@ object ReviewRepositoryLive {
     quill <- ZIO.service[Quill.Postgres[SnakeCase]]
   } yield ReviewRepositoryLive(quill)
   }
+}
+
+object ReviewRepositoryPlayground extends ZIOAppDefault {
+  override def run: ZIO[Any & (ZIOAppArgs & Scope), Any, Any] =
+    val program = for {
+      repo    <- ZIO.service[ReviewRepository]
+      _       <- repo.insertSummary(1, "This is a summary of reviews")
+      summary <- repo.getSummary(1)
+      _       <- Console.printLine(summary)
+      _       <- repo.insertSummary(1, "NEW summary")
+      summary2 <- repo.getSummary(1)
+      _       <- Console.printLine(summary2)
+    } yield ()
+
+    program.provide(
+      ReviewRepositoryLive.layer,
+      Repository.dataLayer
+    )
+
 }
