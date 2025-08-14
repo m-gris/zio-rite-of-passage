@@ -19,6 +19,7 @@ import com.rockthejvm.reviewboard.http.requests.*
 import com.rockthejvm.reviewboard.repositories.ReviewRepositorySpec.badReview
 import com.rockthejvm.reviewboard.repositories.ReviewRepositorySpec.goodReview
 import com.rockthejvm.reviewboard.domain.data.UserSession
+import java.time.Instant
 
 object ReviewControllerSpec extends ZIOSpecDefault {
 
@@ -48,6 +49,10 @@ object ReviewControllerSpec extends ZIOSpecDefault {
     override def getByUserId(userId: Long): Task[List[Review]] = ZIO.succeed {
       List(goodReview, badReview).filter(_.userId == userId)
     }
+
+    override def getSummary(companyId: Long): Task[Option[ReviewSummary]] = ZIO.none
+
+    override def makeSummary(companyId: Long): Task[Option[ReviewSummary]] = ZIO.none
 
   }
 

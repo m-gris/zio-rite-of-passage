@@ -8,6 +8,9 @@ import com.rockthejvm.reviewboard.repositories.ReviewRepository
 import com.rockthejvm.reviewboard.repositories.ReviewRepositorySpec.badReview
 import com.rockthejvm.reviewboard.repositories.ReviewRepositorySpec.goodReview
 import com.rockthejvm.reviewboard.http.requests.ReviewCreationRequest
+import com.rockthejvm.reviewboard.config.SummaryConfig
+import com.rockthejvm.reviewboard.domain.data.ReviewSummary
+import java.time.Instant
 
 object ReviewServiceSpec extends ZIOSpecDefault {
 
@@ -40,9 +43,28 @@ object ReviewServiceSpec extends ZIOSpecDefault {
         List(goodReview, badReview).filter(_.companyId == companyId)
       }
 
+      override def getSummary(companyId: Long): Task[Option[ReviewSummary]] = ZIO.none
+
+      override def insertSummary(companyId: Long, summary: String): Task[ReviewSummary] = ZIO.succeed{
+        ReviewSummary(companyId, summary, Instant.now())
+      }
+
+    }
+
+  }
+
+
+  val stubLLMService = ZLayer.succeed {
+    new LLMService {
+      override def llmCall(prompt: String): Task[Option[String]] = ZIO.none
     }
   }
 
+  val summaryConfigLayer = ZLayer.succeed {
+
+    SummaryConfig(minReviews=3, nSelected=20)
+
+  }
 
   override def spec: Spec[TestEnvironment & Scope, Any] = {
 
@@ -102,7 +124,9 @@ object ReviewServiceSpec extends ZIOSpecDefault {
 
       ).provide(
         ReviewServiceLive.layer,
-        stubRepoLayer
+        stubRepoLayer,
+        stubLLMService,
+        summaryConfigLayer,
         )
   }
 
