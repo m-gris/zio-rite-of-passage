@@ -25,22 +25,22 @@ CREATE TABLE IF NOT EXISTS reviews (
     benefits INT NOT NULL,
     would_recommend INT NOT NULL,
     review TEXT NOT NULL,
-    created TIMESTAMP NOT NULL DEFAULT now(),
-    updated TIMESTAMP NOT NULL DEFAULT now()
+    created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS review_summaries (
     company_id BIGINT NOT NULL PRIMARY KEY,
     content TEXT,
-    created TIMESTAMP NOT NULL DEFAULT now()
+    created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     hashed_password TEXT NOT NULL,
-    created TIMESTAMP NOT NULL DEFAULT now(),
-    updated TIMESTAMP NOT NULL DEFAULT now()
+    created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS otps (
