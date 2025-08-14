@@ -128,8 +128,8 @@ object CompanyPage {
       children <-- status.map { s =>
         dom.console.log(s"Mapping status: $s")
         s match {
-          case Status.LOADING => List(div("loading..."))
-          case Status.NOT_FOUND => List(div("company not found..."))
+          case Status.LOADING => renderLoading
+          case Status.NOT_FOUND => renderNotFound
           case Status.OK(company) => render(company, reviewsSignal(companyId))
         }
       },
@@ -138,6 +138,25 @@ object CompanyPage {
 
   }
 
+  def renderLoading = List(
+    div(
+      cls := "simple-titled-page",
+      h1("Loading...")
+      )
+    )
+
+
+  def renderNotFound = List(
+    div(
+      cls := "simple-titled-page",
+      h1("Oops..."),
+      h2("This company does not exist"),
+        a(
+          href := "/",
+          "Maybe check the company page again ???"
+          )
+      )
+    )
 
   def render(company: Company, reviewsSignal: Signal[List[Review]]) = List(
 
@@ -167,7 +186,7 @@ object CompanyPage {
 
     div(
       cls := "container-fluid",
-      renderCompanySummary, // TODO
+      renderCompanySummary(company),
       children <-- addReviewCardActive.signal
         .map(isActive => Option.when(isActive)(
           AddReviewCard(
@@ -247,14 +266,58 @@ object CompanyPage {
 
     }
 
-  def renderCompanySummary =
+  def renderCompanySummary(company: Company) =
+
+    val summaryBus = EventBus[Option[ReviewSummary]]()
+
+    val buttonStatus = EventBus[Option[String]]()
+
+    val getCurrentSummary = useBackend(_.reviewEndpoints.getSummaryEndpoint(company.id))
+
+    val refresher = Observer[Unit] { _ =>
+
+      val program = for {
+        _          <- ZIO.succeed(buttonStatus.emit(Some("Loading...")))
+        newSummary <- useBackend(_.reviewEndpoints.makeSummaryEndpoint(company.id))
+        _          <- ZIO.succeed(buttonStatus.emit(None))
+      } yield newSummary
+
+      program.emitTo(summaryBus)
+    }
+
+
     div(
+
+      onMountCallback(_ => getCurrentSummary.emitTo(summaryBus)),
+
       cls := "container",
       div(
         cls := "markdown-body overview-section",
+        h3(span("Review Summary")),
         div(
-          cls := "company-description",
-          "TODO company summary"
+          cls := "company-description review-summary-content",
+          child <-- summaryBus.events.map(_.map(_.content).getOrElse("No review summary generated yet")),
+        ),
+
+        child.maybe <-- summaryBus.events.map(
+          _.map(_.created)
+          .map( t => s"AI Generated ${Time.unix2humanReadable(t.toEpochMilli())}")
+          .map(text => div(cls := "review-posted", text))
+          ),
+
+      button(
+        `type` := "button",
+        cls := "rock-action-btn",
+        disabled <-- summaryBus.events
+          .map(
+          _.map(summary =>  Time.past(summary.created.toEpochMilli()))
+            .map(diff => diff < 24 * 3600 * 1000) // less than a day old...
+            .getOrElse(false)
+          )
+          .mergeWith(buttonStatus.events.mapTo(true))
+          .startWith(false),
+        onClick.mapToUnit --> refresher,
+        child.text <-- buttonStatus.events.map(_.getOrElse("GenerateSummary")).startWith("Generate Summary")
         )
       )
     )
