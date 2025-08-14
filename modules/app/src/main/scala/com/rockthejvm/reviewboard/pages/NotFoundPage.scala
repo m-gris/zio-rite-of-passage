@@ -6,6 +6,11 @@ import com.raquo.laminar.api.L.{*, given}
 object NotFoundPage {
 
   def apply() =
-    div("404 page not found - Are you lost ?")
+    div(
+      cls := "simple-titled-page",
+      h1("Oops"),
+      h2("This page can't be found"),
+      div("Are you lost friend?")
+      )
 
 }
