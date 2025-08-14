@@ -11,6 +11,8 @@ import org.scalajs.dom.HTMLImageElement
 
 import com.rockthejvm.reviewboard.core.ZJS.*
 import com.rockthejvm.reviewboard.domain.data.Company
+import zio.Config.Constant
+import com.rockthejvm.reviewboard.common.Constants
 case class CreateCompanyState(
   name: String = "",
   url: String = "",
@@ -121,21 +123,28 @@ object CreateCompanyPage extends FormPage[CreateCompanyState](title="Create Comp
             if isRequired then span("*") else span(),
             name,
           ),
-        input(
-          `type`      := "file",
-          cls         := "form-control",
-          idAttr      := uid,
-          accept      := "image/*",
+        div(
+            cls := "image-upload",
+            input(
+              `type`      := "file",
+              cls         := "form-control",
+              idAttr      := uid,
+              accept      := "image/*",
 
-          onChange.mapToFiles --> fileUploader
-        )
+              onChange.mapToFiles --> fileUploader
+            ),
+            img (
+              cls := "image-upload-thumbnail",
+              src <-- state.signal.map(_.image.getOrElse(Constants.logoPlaceholder))
+              )
+          )
       )
     )
   )
   }
 
   private def computeDimensions(width: Int, height: Int): (Int, Int)= {
-    if width > height
+    if width >= height
       then {
         val ratio = width * 1.0 / 256
         val newWidth = width / ratio
