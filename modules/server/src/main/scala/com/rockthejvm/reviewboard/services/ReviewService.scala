@@ -36,7 +36,13 @@ class ReviewServiceLive private(/*
   ) extends ReviewService {
 
     override def create(request: ReviewCreationRequest, userId: Long): Task[Review] =
-      repo.create(Review(
+      ZIO.log(
+        s"""
+        Creating review at instant:
+          - instant.now: ${Instant.now()}
+          - absolute millis: ${Instant.now().toEpochMilli()}
+        """
+      ) *> repo.create(Review(
         id = -1L, // will be create by the DB
         companyId=request.companyId,
         userId=userId,
