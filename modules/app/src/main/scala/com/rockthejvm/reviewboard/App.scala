@@ -16,6 +16,7 @@ object App {
     onMountCallback(_ => Session.loadUserState()),
     Header(),
     Router(),
+    Footer(),
     ).amend(LinkHandler.bind) // for internal links
 
   def main(args: Array[String]): Unit = {
