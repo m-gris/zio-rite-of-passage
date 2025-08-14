@@ -2,6 +2,8 @@ package com.rockthejvm.reviewboard.common
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.*
+import scala.scalajs.LinkingInfo
+import org.scalajs.dom.window
 
 object Constants {
 
@@ -23,6 +25,11 @@ object Constants {
   val emailRegex = """^[a-zA-Z0-9\.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""
 
   val urlRegex = """^(https?):\/\/(([^:/?#]+)(?::(\d+))?)(\/[^?#]*)?(\?[^#]*)?(#.*)?"""
+
+  val backendBaseUrl =
+    if LinkingInfo.developmentMode then "http://localhost:8080" // ENV==dev
+    else window.location.origin
+
 
 
 }

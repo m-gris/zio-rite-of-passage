@@ -13,6 +13,7 @@ import com.rockthejvm.reviewboard.http.endpoints.*
 import com.rockthejvm.reviewboard.domain.data.Company
 import com.rockthejvm.reviewboard.config.BackendClientConfig
 import com.rockthejvm.reviewboard.domain.data.UserSession
+import com.rockthejvm.reviewboard.common.Constants
 
 
 case class RestrictedEndpointException(message: String) extends RuntimeException(message)
@@ -104,7 +105,7 @@ object BackendClientLive {
   val configuredLayer = {
     val backend = FetchZioBackend()
     val interpreter = SttpClientInterpreter()
-    val config = BackendClientConfig(Some(uri"http://localhost:8080"))
+    val config = BackendClientConfig(Some(uri"${Constants.backendBaseUrl}"))
 
     ZLayer.succeed(backend) ++
     ZLayer.succeed(interpreter) ++

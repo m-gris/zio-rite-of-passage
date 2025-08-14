@@ -5,4 +5,5 @@ final case class EmailConfig(
   port: Int,
   user: String,
   pwd: String,
+  baseUrl: String,
   )

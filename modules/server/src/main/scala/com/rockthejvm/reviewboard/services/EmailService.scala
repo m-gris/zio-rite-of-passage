@@ -12,7 +12,7 @@ import javax.mail.Transport
 import com.rockthejvm.reviewboard.config.*
 import com.rockthejvm.reviewboard.domain.data.Company
 
-trait EmailService {
+trait EmailService(baseUrl: String){
   def sendEmail(to: String, subject: String, content: String): Task[Unit]
   def sendRecoveryEmail(to: String, otp: String): Task[Unit] =
     val subject = "Rock the JVM: Password Recovery"
@@ -26,6 +26,10 @@ trait EmailService {
       ">
         <h1>Rock the JVM: Password Recovery</h1>
         <p>Your One-Time-Password is: <strong>$otp</strong></p>
+        <p>
+          Go
+          <a href="$baseUrl/recover"> here </a>
+          to reset your password.
         <p>😘 from RTJVM</p>
       </div>
     """
@@ -44,7 +48,7 @@ trait EmailService {
             <h1>You are invited to review ${company.name}</h1>
             <p>
               Go to
-              <a href="http://localhost:1234/company/${company.id}">this link </a>
+              <a href="$baseUrl/company/${company.id}">this link </a>
               to add your thoughts on this company.
               <br/>
               Should take just a minute.
@@ -55,7 +59,7 @@ trait EmailService {
     sendEmail(to, subject, content)
 }
 
-class EmailServiceLive private (emailConfig: EmailConfig) extends EmailService {
+class EmailServiceLive private (emailConfig: EmailConfig) extends EmailService(emailConfig.baseUrl){
 
   private val host: String = emailConfig.host
   private val port: Int    = emailConfig.port
