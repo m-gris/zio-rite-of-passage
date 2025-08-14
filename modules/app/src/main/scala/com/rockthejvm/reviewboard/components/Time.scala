@@ -39,5 +39,8 @@ object MomentLib extends js.Object {
 object Time {
   def unix2humanReadable(millis: Long): String =
     MomentLib.unix(millis / 1000).fromNow()
+
+  def past(millis: Long) =
+    new Date().getTime.toLong - millis
 }
 
