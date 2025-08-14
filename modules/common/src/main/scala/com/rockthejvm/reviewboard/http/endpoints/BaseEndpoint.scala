@@ -23,6 +23,9 @@ trait BaseEndpoint {
         // This bidirectional mapping ensures consistent error handling across the API
         .mapErrorOut[Throwable](HttpError.encode)(HttpError.decode)
 
+        // path prefix for all backend endpoints
+        .prependIn("api")
+
     val securedBaseEndpoint =
       baseEndpoint
         // check for Header "Authorization: Bearer <token>"
